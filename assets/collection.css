@@ -1,0 +1,461 @@
+/* AETERNA — the collection page. Builds only on tokens from site.css and the
+   components in site.css and editorial.css. Three compositions live here:
+     1. the sticky toolbar dock
+     2. the filter panel, a left drawer that becomes a sheet under 1040px
+     3. the quick view dialog and the deck frame
+   Nothing below redefines a shared component; every rule either composes one or
+   styles a class that belongs to this page. */
+
+/* ------------------------------------------------- 0. JS PRESENCE GATES --
+   The document ships with <html class="no-js"> and the one inline script in the
+   head swaps it for .js, so these two classes let one document serve both
+   states honestly instead of promising controls that cannot work. */
+html.js .js-off{display:none}
+html:not(.js) .js-on{display:none}
+/* Quick view needs a script. With none, the button would be a dead control. */
+html:not(.js) .pcard__quick{display:none}
+
+/* -------------------------------------------------------- 1. THE OPENER --
+   editorial.css holds .page-head__in to 22ch, which is right for an article
+   title alone. Here the title keeps that column and the lede and the count sit
+   beside it in .split-2, so the opener is two lines tall rather than six.
+   --sec * .66 above: this is the page people come to browse, so the first row
+   of watches has to be in the first screen. The bottom padding carries the
+   toolbar dock's own header-height band, which the dock pulls back up. */
+.page-head--collection{
+  padding-top:calc(var(--header-h) + var(--sec) * .66);
+  padding-bottom:calc(var(--header-h) + var(--s5));
+}
+.collection-head{align-items:end}
+.collection-head__aside{display:grid;gap:var(--s4);align-content:end}
+.page-head__count{
+  font-family:var(--f-mono);letter-spacing:.06em;
+  max-width:var(--measure);
+}
+/* Once .split-2 stacks, the lede sits under the title rather than beside it. */
+@media (max-width:880px){
+  .collection-head__aside{align-content:start}
+}
+
+/* ------------------------------------------------------- 2. THE TOOLBAR --
+   The dock's top band is exactly the height of the fixed header. Once the dock
+   sticks, the header sits inside that band, so nothing scrolls through the gap
+   even while site.js has the header retracted. */
+.toolbar-dock{
+  position:sticky;top:0;
+  z-index:calc(var(--z-header) - 1);   /* under the header, over the grid */
+  padding-top:var(--header-h);
+  /* In flow the band lies over the opener's own bottom padding, so it costs
+     nothing; once the dock sticks it is what the header sits in. */
+  margin-top:calc(var(--header-h) * -1);
+  background:var(--paper);
+  border-bottom:1px solid var(--rule);
+}
+.toolbar{
+  display:flex;flex-wrap:wrap;gap:var(--s3) var(--s5);
+  align-items:center;justify-content:space-between;
+  padding-block:var(--s2);
+}
+.toolbar__count{
+  font:400 var(--t-sm)/1 var(--f-mono);letter-spacing:.06em;
+  color:var(--ink);margin:0;
+}
+.toolbar__controls{display:flex;flex-wrap:wrap;gap:var(--s3);align-items:center}
+
+/* The button is the only way to the filters now, so it exists wherever the
+   panel does -- which is wherever collection.js has armed it. */
+.toolbar__filter{display:none}
+html.js .toolbar__filter{display:inline-flex}
+.toolbar__label{display:inline-flex;align-items:baseline;gap:var(--s2)}
+.toolbar__badge{font-family:var(--f-mono);letter-spacing:.04em}
+
+/* Sort sits on one line in a toolbar rather than stacked as .field does by
+   default. The 1fr column floors at 180px so the select never crushes. */
+.field--inline{
+  grid-template-columns:auto minmax(calc(var(--s11) + var(--s1)),auto);
+  align-items:center;gap:var(--s3);
+}
+
+/* ------------------------------------------------------- 2b. SORT MENU --
+   The listbox itself is the shared .selectmenu in site.css; only the trigger
+   is local, because here it has to read as a sibling of the Filter button
+   rather than as a form field. */
+.sortmenu__btn{
+  width:100%;
+  text-transform:none;letter-spacing:0;
+  font:400 var(--t-sm)/1 var(--f-sans);
+}
+.field--inline .selectmenu{min-width:calc(var(--s11) + var(--s1))}
+
+/* ------------------------------------------------------- 3b. VIEW SWAP --
+   Grid and deck are different heights, so they cannot cross-dissolve in place
+   without the page jumping under the pointer. Instead the box they share
+   carries the movement: it leaves in the direction you threw the toggle, the
+   panes swap while nothing is on screen, and it returns from the other side.
+   Short enough to read as one gesture, not as a page change. */
+.browse__views{
+  transition:opacity 170ms var(--e-io),transform 170ms var(--e-io);
+}
+.browse__views.is-leaving{opacity:0}
+.browse__views.is-leaving[data-dir=fwd]{transform:translateX(-22px)}
+.browse__views.is-leaving[data-dir=back]{transform:translateX(22px)}
+/* the entering half starts displaced with no transition, so the frame that
+   removes the class is the one that animates */
+.browse__views.is-entering{opacity:0;transition:none}
+.browse__views.is-entering[data-dir=fwd]{transform:translateX(22px)}
+.browse__views.is-entering[data-dir=back]{transform:translateX(-22px)}
+
+@media (prefers-reduced-motion:reduce){
+  /* site.css already collapses the durations; make sure nothing is left
+     displaced if a class is removed a frame late */
+  .browse__views,.browse__views.is-leaving,.browse__views.is-entering{
+    transform:none;opacity:1;
+  }
+}
+
+/* ----------------------------------------------------- 3. BROWSE LAYOUT --
+   One column at every width. The filters used to hold a 224px sticky rail
+   here; they are behind the Filter button now, so the twelve get the measure. */
+.browse__body{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:0;
+  padding-block:var(--s5) var(--s8);
+  align-items:start;
+}
+.browse__main{min-width:0}
+
+.grid-head{
+  display:flex;flex-wrap:wrap;gap:var(--s4) var(--s5);
+  align-items:center;justify-content:space-between;
+  margin-bottom:var(--s5);
+}
+.grid-head__note{max-width:52ch}
+
+/* ------------------------------------------------------ 4. VIEW TOGGLE -- */
+.view-toggle{
+  position:relative;isolation:isolate;flex:none;
+  /* equal columns, so the thumb is exactly half whatever the labels measure */
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  border:1px solid var(--rule-strong);border-radius:var(--r-sm);
+  background:var(--paper-card);
+  /* the thumb is a filled block, so it has to be clipped to the rounded shell
+     or it squares the corners off again */
+  overflow:hidden;
+}
+
+/* The thumb. One block that slides between the two segments, rather than two
+   that flash on and off: the state change becomes a movement you can follow,
+   which is the whole point of a toggle over a pair of buttons. It is a
+   pseudo-element so the markup stays two plain buttons, and it sits behind
+   them on z-index 0 so the labels never move. */
+.view-toggle::before{
+  content:"";
+  position:absolute;z-index:0;
+  top:0;bottom:0;left:0;width:50%;
+  background:var(--ink);
+  border-radius:calc(var(--r-sm) - 1px);
+  /* --e-io, the same curve the filter panel slides on. --e-out front-loads so
+     hard that the thumb is all but arrived in the first 80ms and the movement
+     reads as a jump. */
+  transition:transform var(--d2) var(--e-io);
+}
+.view-toggle[data-active=deck]::before{transform:translateX(100%)}
+
+.view-toggle__btn{
+  position:relative;z-index:1;
+  min-height:var(--s7);padding:0 var(--s5);
+  background:none;border:0;cursor:pointer;
+  font:500 var(--t-xs)/1 var(--f-sans);letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-45);
+  /* the label crosses the moving thumb, so it changes on the same curve */
+  transition:color var(--d2) var(--e-io);
+}
+.view-toggle__btn:hover{color:var(--ink)}
+.view-toggle__btn[aria-pressed=true],
+.view-toggle__btn[aria-pressed=true]:hover{color:var(--paper)}
+
+/* ----------------------------------------------------------- 5. FILTERS -- */
+/* The panel. A left drawer on desktop -- the same gesture as the bag and the
+   wishlist, which come from the right -- and a bottom sheet under 1040px where
+   the thumb is. site.js's panel controller owns the scrim, the focus trap,
+   Escape and returning focus to the button; collection.js sets the dialog
+   roles; the geometry below hangs off .js, which is set at first paint. */
+/* The base is the no-script form: a readable block above the grid. */
+.filters{display:grid;gap:var(--s5);align-content:start;padding-block:var(--s7) 0}
+
+/* Gated on .js, set by the inline script in the head, NOT on a class added
+   when collection.js runs at the end of the body: that left the static
+   fallback painting first and then a 408px panel sliding off to the left on
+   every single load. The 2500ms failsafe in the head still strips .js if the
+   script never boots, which puts the static block back. */
+html.js .filters{
+  position:fixed;top:0;bottom:0;left:0;
+  transition:none;                    /* armed silently; see .filters-armed */
+  z-index:calc(var(--z-drawer) + 1);
+  width:min(408px,92vw);
+  grid-template-rows:auto minmax(0,1fr) auto;gap:0;padding-block:0;
+  background:var(--paper);color:var(--ink-70);
+  border-right:1px solid var(--rule);
+  box-shadow:var(--lift-2);
+  transform:translateX(-102%);visibility:hidden;
+}
+/* one frame later, so the initial placement can never animate */
+html.filters-armed .filters{
+  transition:transform var(--d2) var(--e-io),visibility var(--d2);
+}
+html.js .filters.is-open{transform:none;visibility:visible}
+.filters__head{display:flex;align-items:center;justify-content:space-between;gap:var(--s4)}
+html.js .filters__head{
+  padding:var(--s5) var(--s6) var(--s4);
+  border-bottom:1px solid var(--rule);
+}
+.filters__title{
+  font:500 var(--t-h4)/1 var(--f-sans);letter-spacing:-.008em;
+  text-transform:none;color:var(--ink);margin:0;
+}
+.filters__close{display:none}
+html.js .filters__close{display:grid}
+.filters__scroll{display:grid;align-content:start;gap:var(--s6)}
+html.js .filters__scroll{
+  overflow-y:auto;overscroll-behavior:contain;
+  padding:var(--s5) var(--s6) var(--s6);
+}
+/* Three groups in a tall panel need to read as three things, not one list.
+   The separator lives on the LEGEND, not on the fieldset: a legend is not a
+   grid item and is laid out in the fieldset's border area, so padding on the
+   fieldset moved the chips down and left the legend behind -- Case sat flush
+   on its chips while the other two had 32px under them. */
+.fgroup+.fgroup .fgroup__legend{
+  padding-top:var(--s6);
+  border-top:1px solid var(--rule);
+}
+.filters__foot{display:none}
+html.js .filters__foot{
+  display:grid;gap:var(--s3);justify-items:center;
+  padding:var(--s4) var(--s6) var(--s5);
+  border-top:1px solid var(--rule);
+}
+
+.filters__apply{margin:0}
+
+.fgroup{border:0;margin:0;padding:0;display:grid;gap:var(--s3)}
+.fgroup__legend{
+  /* full width so the rule above can span the panel, and its own bottom
+     spacing because the fieldset's grid gap does not reach a legend */
+  width:100%;
+  padding:0 0 var(--s3);
+  font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:var(--track-wide);
+  text-transform:uppercase;color:var(--ink-45);
+}
+.fgroup__chips{display:grid;gap:var(--s2)}
+.fgroup__note{font:400 var(--t-xs)/1.5 var(--f-sans);color:var(--ink-45);margin:0}
+
+/* A chip is a real checkbox. The input stays in the accessibility tree with
+   .sr from site.css; the face beside it carries every visual state, so no
+   :has() is needed and the checked and focused styles work everywhere. */
+.chip{position:relative;display:block}
+.chip__face{
+  display:flex;align-items:center;gap:var(--s3);
+  width:100%;min-height:var(--s7);padding:0 var(--s4);
+  background:var(--paper-card);
+  border:1px solid var(--rule-strong);border-radius:var(--r-sm);
+  font:400 var(--t-sm)/1.2 var(--f-sans);color:var(--ink-70);
+  cursor:pointer;
+  transition:background-color var(--d1) var(--e-micro),border-color var(--d1) var(--e-micro),
+             color var(--d1) var(--e-micro);
+}
+.chip__face:hover{border-color:var(--ink-45);color:var(--ink)}
+.chip__sw{
+  flex:none;width:var(--s3);height:var(--s3);border-radius:var(--r-full);
+  background:var(--sw);box-shadow:inset 0 0 0 1px var(--rule-strong);
+}
+.chip__t{flex:1;min-width:0}
+.chip__n{
+  flex:none;font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:.06em;
+  color:var(--ink-45);
+}
+.chip input:checked+.chip__face{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip input:checked+.chip__face .chip__n{color:var(--paper);opacity:.68}
+.chip input:checked+.chip__face .chip__sw{box-shadow:inset 0 0 0 1px var(--night-rule-strong)}
+.chip input:focus-visible+.chip__face{outline:2px solid var(--ink);outline-offset:3px}
+/* A combination nothing can satisfy still reads, it just stops inviting. */
+.chip__n[data-n="0"]{color:var(--ink-25)}
+
+/* ------------------------------------------------- 5b. QUICK VIEW ON TOUCH --
+   site.css hides .pcard__quick where there is no hover, and it is right to: a
+   button revealed by hover has nothing to reveal it. So touch gets its own
+   control in the card body rather than an override of that rule. z-index 2
+   clears the whole-card link overlay, the same way .pcard__quick does. */
+.pcard__touch{display:none;position:relative;z-index:2;margin:var(--s2) 0 0}
+@media (pointer:coarse){.pcard__touch{display:block}}
+
+/* ------------------------------------------------------- 6. EMPTY STATE -- */
+#grid-empty .btn{margin-top:var(--s2)}
+
+/* -------------------------------------------------------------- 7. DECK --
+   The stage has no height until the frame is built, so an unengaged deck is
+   just its own introduction and holds no tab stops at all. */
+.deck{display:grid;gap:var(--s6);padding-block:var(--s2) 0}
+.deck__stage{display:none}
+.deck .deck__stage{
+  display:block;position:relative;
+  /* 5 x --s10 = 640px, the same order of plate height the home story uses */
+  height:min(72vh,calc(var(--s10) * 5));
+  /* the deck reads at night: a cream field behind a black frame flashes before
+     the iframe paints, and a cream-weight rule round it reads as a hole in the page */
+  background:var(--night);
+  border:1px solid var(--night-rule);border-radius:var(--r-sm);
+  overflow:hidden;
+}
+.deck__stage .character-carousel{position:absolute;inset:0}
+.deck__stage iframe{display:block}
+
+/* --------------------------------------------------------- 8. QUICK VIEW --
+   Opened through site.js's panel controller, so the focus trap, Escape, the
+   scrim and the return of focus are all the shared behaviour. */
+.quickview{
+  position:fixed;inset:0;z-index:calc(var(--z-drawer) + 1);
+  display:grid;place-items:center;padding:var(--gutter);
+  opacity:0;visibility:hidden;
+  /* The frame around the panel lets clicks through to site.js's own scrim, so
+     the scrim closes this dialog exactly as it closes the drawers. */
+  pointer-events:none;
+  transition:opacity var(--d2) var(--e-io),visibility var(--d2);
+}
+.quickview.is-open{opacity:1;visibility:visible}
+.quickview__panel{pointer-events:auto}
+.quickview__panel{
+  /* --wrap minus --s10: wide enough for two plates beside the specification */
+  width:min(calc(var(--wrap) - var(--s10)),100%);
+  max-height:calc(100svh - 2 * var(--gutter));
+  /* minmax(0,1fr) so a long nowrap label inside can never widen the panel */
+  display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);
+  background:var(--paper);color:var(--ink-70);
+  border:1px solid var(--rule);border-radius:var(--r-sm);
+  box-shadow:var(--lift-2);
+  transform:translateY(var(--s5));
+  transition:transform var(--d2) var(--e-io);
+}
+.quickview.is-open .quickview__panel{transform:none}
+.quickview__head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s4);
+  padding:var(--s5) var(--s5) var(--s4);border-bottom:1px solid var(--rule);
+}
+.quickview__head .eyebrow{margin-bottom:var(--s2)}
+.quickview__body{overflow-y:auto;padding:var(--s5)}
+
+.qv{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:var(--s6);align-items:stretch}
+/* The two plates take the height the specification sets, so the panel has no
+   dead corner. The shots are centred, so the taller crop loses nothing. */
+.qv__media{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s3);min-height:0}
+.qv__media img{
+  width:100%;height:100%;min-height:0;object-fit:cover;
+  background:var(--paper-sunk);border-radius:var(--r-sm);
+}
+.qv__info{display:grid;gap:var(--s4);align-content:start;min-width:0}
+.qv .dl-spec>div{padding-block:var(--s3)}
+.qv__price{font:400 var(--t-h4)/1 var(--f-mono);letter-spacing:.04em;color:var(--ink);margin:0}
+.qv__price span{display:block;margin-top:var(--s2)}
+.qv__avail{
+  display:inline-flex;align-items:center;gap:var(--s2);
+  font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-45);margin:0;
+}
+.qv__avail::before{
+  content:"";width:var(--s2);height:var(--s2);border-radius:var(--r-full);
+  background:currentColor;
+}
+.qv__avail[data-avail=in]{color:var(--ok)}
+.qv__avail[data-avail=low]{color:var(--brass)}
+.qv__avail[data-avail=waitlist]{color:var(--err)}
+.qv__actions{display:flex;flex-wrap:wrap;gap:var(--s3);margin-top:var(--s2)}
+.qv__actions .btn{flex:1 1 auto}
+.qv__wish svg{fill:none;stroke:currentColor;stroke-width:1.4}
+.qv__wish[aria-pressed=true] svg{fill:currentColor}
+.qv__link{margin:0;min-width:0}
+/* .btn is nowrap by default; this one carries a sentence, so it may wrap. */
+.qv__link .btn{white-space:normal;text-align:center;line-height:1.35;padding-block:var(--s3)}
+
+/* --------------------------------------------- 9. COMPOSITION TAIL-ENDS -- */
+.assure{background:var(--paper-sunk)}
+.assure .tiles{margin-top:var(--s8)}
+.assure .tile p:last-child{margin-top:var(--s2)}
+.collection-cta{background:var(--night)}
+
+/* ------------------------------------------------- 10. COARSE POINTER --
+   site.css sizes .pcard__wish at 38px, which is right for a mouse. The quality
+   bar asks for 44px under a coarse pointer, so the hit area grows by --s1 on
+   every side, to 46px, without touching any property site.css sets. */
+@media (pointer:coarse){
+  #grid .pcard__wish::after{content:"";position:absolute;inset:calc(var(--s1) * -1)}
+  /* .crumbs sets the type but not a touch size. The two items get 48px of
+     height and --s3 of padding each side; the row shifts back by the same --s3
+     so "Home" still starts on the same line as the eyebrow below it. */
+  .page-head--collection .crumbs{margin-left:calc(var(--s3) * -1)}
+  .page-head--collection .crumbs a,
+  .page-head--collection .crumbs [aria-current=page]{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-height:var(--s7);min-width:var(--s7);padding-inline:var(--s3);
+  }
+}
+
+/* ------------------------------------------------------- 11. UNDER 1040 --
+   The drawer becomes a sheet. Same markup, same form, same checkboxes. */
+@media (max-width:1040px){
+  /* Under here the thumb is what reaches, so the drawer becomes a bottom
+     sheet. Only the geometry changes; the behaviour is identical. */
+  html.js .filters{
+    left:0;right:0;bottom:0;top:auto;
+    width:auto;
+    max-height:min(86svh,calc(100svh - var(--header-h)));
+    border-right:0;border-top:1px solid var(--rule);
+    border-radius:var(--r-md) var(--r-md) 0 0;
+    transform:translateY(102%);
+  }
+  html.js .filters__head{padding:var(--s5) var(--gutter) var(--s4)}
+  html.js .filters__scroll{padding:var(--s5) var(--gutter) var(--s6)}
+  html.js .filters__foot{padding:var(--s4) var(--gutter) var(--s5)}
+
+  .browse__main{padding-block:var(--s7) 0}
+  .qv{grid-template-columns:minmax(0,1fr);gap:var(--s5)}
+  .quickview__panel{width:100%}
+}
+
+/* --------------------------------------------------------- 12. UNDER 760 --
+   The toolbar settles into exactly two rows: the count, then the two controls
+   side by side and thumb sized. Clear all takes a third row, and only ever
+   appears once something is on. */
+@media (max-width:760px){
+  .toolbar{gap:var(--s3)}
+  .toolbar__count{flex:1 1 100%}
+  .toolbar__controls{flex:1 1 100%;gap:var(--s3)}
+  .toolbar__filter{flex:0 0 auto}
+  /* basis 0 so the select gives way to the Filter button instead of wrapping */
+  .field--inline{flex:1 1 0;min-width:0;grid-template-columns:auto minmax(0,1fr)}
+  .toolbar__clear{flex:1 1 100%;order:3}
+
+  .grid-head{gap:var(--s4)}
+  .grid-head__note{flex:1 1 100%;order:2}
+  .view-toggle{order:1}
+  .deck.is-live .deck__stage{height:min(80vh,calc(var(--s10) * 5))}
+  .qv__actions .btn{flex:1 1 100%}
+}
+
+/* --------------------------------------------------------- 13. UNDER 380 --
+   On the narrowest phone the Filter icon gives its room to the sort value, so
+   "Featured" and "Rarest first" still read in full. */
+@media (max-width:380px){
+  .toolbar__filter svg{display:none}
+}
+
+/* --------------------------------------------------------- 14. UNDER 360 --
+   Only on the narrowest phones does the visible "Sort" caption step aside, and
+   it steps aside rather than disappearing: same treatment as .sr, so the label
+   stays attached to the select for anyone who is not reading the screen. */
+@media (max-width:359px){
+  .field--inline>label{
+    position:absolute;width:1px;height:1px;overflow:hidden;
+    clip-path:inset(50%);white-space:nowrap;
+  }
+}

@@ -1,0 +1,227 @@
+/* AETERNA — journal layer. journal.html only.
+
+   One document, two states: the index of entries, and one entry read in full.
+   Everything here builds on tokens from site.css and on the shapes in
+   editorial.css. Nothing here redefines either of them. */
+
+/* ------------------------------------------------------------ 1. STATES --
+   A ?id= in the URL makes <html data-journal-entry="slug"> in the head, before
+   first paint, so the index never flashes. The script at the foot of the page
+   then unhides that one <article class="entry">.
+
+   With scripts off neither thing happens, so the document falls back to what it
+   honestly is: the index, followed by all six entries in full. Every link still
+   works and no sentence is out of reach. */
+html[data-journal-entry] #view-index{display:none}
+html:not(.js) .entry[hidden]{display:block !important}
+html.js .jfallback{display:none}
+
+/* site.js sets data-mode on the header and cannot do it here, so with scripts
+   off the bar keeps the page's ink over a night opener and measures 2.0:1.
+   Give it the solid ground it would otherwise settle on after the first scroll.
+   Scoped to html:not(.js), so it never touches the designed header. */
+html:not(.js) .site-header{background:var(--paper);border-bottom-color:var(--rule);color:var(--ink-70)}
+html:not(.js) .site-header .brand__word{color:var(--ink)}
+html:not(.js) .site-header .brand__mark{stroke:var(--brass)}
+
+.jnoscript{padding-block:var(--s5);margin:0;font:400 var(--t-sm)/1.5 var(--f-sans);color:var(--ink-70)}
+
+/* ------------------------------------------------------------ 2. OPENER --
+   Both openers are night chapters, so the transparent header reads over them
+   the way it does over the film on the home page. editorial.css colours the
+   crumbs for night but not their hover or their separator. */
+.night .crumbs a:hover{color:var(--night-ink)}
+.night .crumbs li+li::before{color:var(--night-rule-strong)}
+
+/* .page-head__in caps at 22ch, which is right for a display headline and wrong
+   for the lines under it, so the standfirst sits in the other half of the split. */
+.jhead-side{display:grid;gap:var(--s4);align-content:end}
+.jhead-side .lede{margin:0}
+
+/* An entry headline is a sentence rather than a page title. At 22ch a forty
+   character headline towers down five lines, so the entry openers take the
+   full half of the split and let text-wrap:balance do the rest. */
+.entry .page-head__in{max-width:none}
+
+/* Coarse pointers: the crumb row is 11px mono, so give the links a real box.
+   Growing the line box is safe, the row carries nothing else. The side padding
+   takes a short crumb past 44px wide and the matching negative margin keeps the
+   separators where they were drawn. */
+@media (pointer:coarse){
+  .entry .crumbs a,.entry .crumbs [aria-current]{display:inline-flex;align-items:center;min-height:44px}
+  .entry .crumbs a{padding-inline:var(--s3);margin-inline:calc(-1 * var(--s3))}
+}
+
+/* The filter bar closes the opener, so the opener does not also need its full
+   closing space. */
+#view-index .page-head{padding-bottom:var(--s8)}
+
+/* -------------------------------------------------------- 3. FILTER BAR -- */
+.jbar-out{border-bottom:1px solid var(--rule)}
+.jbar{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:var(--s4) var(--s6);padding-block:var(--s5);
+}
+.jchips{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.chip{
+  display:inline-flex;align-items:center;gap:var(--s2);
+  min-height:40px;padding:0 var(--s4);
+  /* paper-card, not paper-sunk: --ink-45 on the sunk ground measures 4.4:1 and
+     the count beside every label is 11px text. */
+  background:var(--paper-card);color:var(--ink-70);
+  border:1px solid var(--rule-strong);border-radius:var(--r-sm);
+  font:500 var(--t-sm)/1 var(--f-sans);letter-spacing:.04em;
+  text-decoration:none;white-space:nowrap;
+  transition:background-color var(--d1) var(--e-micro),color var(--d1) var(--e-micro),
+             border-color var(--d1) var(--e-micro);
+}
+.chip:hover{border-color:var(--ink);color:var(--ink)}
+.chip:hover .chip__n{color:var(--ink-70)}
+.chip__n{font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:.06em;color:var(--ink-45)}
+.chip[aria-current]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip[aria-current] .chip__n{color:var(--paper);opacity:.68}   /* 7.8:1 on --ink */
+@media (pointer:coarse){.chip{min-height:48px;padding:0 var(--s5)}}
+
+/* -------------------------------------------------------- 4. LEAD ENTRY --
+   The lead and the grid below it are one list, so they share a single section
+   rhythm instead of stacking two .sec paddings against each other. */
+.jlead-sec{padding-block:var(--sec) 0}
+.jlead{
+  position:relative;display:grid;align-items:center;
+  grid-template-columns:minmax(0,1.18fr) minmax(0,1fr);
+  gap:clamp(32px,4vw,80px);
+}
+.jlead__media{
+  display:block;aspect-ratio:3/2;overflow:hidden;
+  background:var(--paper-sunk);border-radius:var(--r-sm);
+}
+.jlead__media img{width:100%;height:100%;object-fit:cover;transition:transform var(--d4) var(--e-out)}
+.jlead:hover .jlead__media img{transform:scale(1.03)}
+.jlead__body{display:grid;gap:var(--s4);align-content:center}
+.jlead .h2{margin:0;max-width:18ch}
+.jlead .h2 a{text-decoration:none;transition:color var(--d1) var(--e-micro)}
+.jlead .h2 a::after{content:"";position:absolute;inset:0}
+.jlead:hover .h2 a{color:var(--brass)}
+.jlead .lede{max-width:var(--measure)}
+
+/* A decorative twin of .btn--ghost. The headline link already covers the whole
+   card, so this is a cue and not a second tab stop. */
+.jlead__cue{
+  position:relative;justify-self:start;padding-bottom:var(--s1);margin-top:var(--s2);
+  font:500 var(--t-sm)/1 var(--f-sans);letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink);
+}
+.jlead__cue::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:currentColor;
+  transform:scaleX(1);transform-origin:right;transition:transform var(--d2) var(--e-out);
+}
+.jlead:hover .jlead__cue::after{transform:scaleX(0)}
+@media (max-width:900px){.jlead{grid-template-columns:1fr;gap:var(--s5)}.jlead .h2{max-width:none}}
+
+/* ------------------------------------------------------------- 5. GRID -- */
+.jmore{padding-block:var(--sec)}
+.jmore__head{margin-bottom:var(--s8)}
+.jgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s8) var(--s6)}
+@media (max-width:1000px){.jgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.jgrid{grid-template-columns:1fr;gap:var(--s7)}}
+
+.jentry{position:relative;display:grid;gap:var(--s4);align-content:start}
+.jentry__media{
+  display:block;aspect-ratio:3/2;overflow:hidden;
+  background:var(--paper-sunk);border-radius:var(--r-sm);
+}
+.jentry__media img{width:100%;height:100%;object-fit:cover;transition:transform var(--d4) var(--e-out)}
+.jentry:hover .jentry__media img{transform:scale(1.04)}
+.jentry .h3{margin:0}
+.jentry .h3 a{text-decoration:none;transition:color var(--d1) var(--e-micro)}
+.jentry .h3 a::after{content:"";position:absolute;inset:0}
+.jentry:hover .h3 a{color:var(--brass)}
+.jentry p{margin:0;font-size:var(--t-sm);color:var(--ink-45)}
+
+/* Most headlines in the grid run to two lines. Reserve two lines for all of
+   them above the one-column breakpoint, so a short headline does not lift its
+   standfirst above its neighbours'. Derived from the h3 size and line height,
+   no new value. */
+@media (min-width:621px){.jgrid .h3{min-height:calc(2 * var(--lh-snug) * var(--t-h3))}}
+
+/* Portrait part photographs sit low in frame, so a 3:2 crop taken from the
+   middle loses the case. Drop the crop window instead. */
+.is-tall{object-position:50% 62%}
+
+.jmeta{
+  display:flex;flex-wrap:wrap;gap:var(--s3);margin:0;
+  font:400 var(--t-xs)/1.4 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-45);
+}
+.jmeta b{font-weight:400;color:var(--brass)}
+
+/* ------------------------------------------------------------ 6. ENTRY -- */
+.entry__lead img,.entry__body .prose>figure img{
+  aspect-ratio:3/2;object-fit:cover;background:var(--paper-sunk);
+}
+.entry__body .prose{margin-inline:auto}
+.entry__body .prose>:first-child{margin-top:0}
+
+/* editorial.css intends .prose>*+*{margin-top:var(--s5)} but then writes
+   .prose p{...;margin:0}, which is one type selector more specific and wins, so
+   every paragraph and list in a .prose block renders flush against the last.
+   Measured: margin-top computes to 0px on every <p> and <ul>. Put the intended
+   rhythm back for the journal only, leaving the headings, figures and pull
+   quotes on the margins editorial.css already gives them. The shared fix is in
+   the report under needsFromShared. */
+.entry__body .prose>*+:is(p,ul,ol):not(.pull){margin-top:var(--s5)}
+.entry__body .prose>:is(h2,h3)+:is(p,ul,ol):not(.pull){margin-top:var(--s4)}
+
+/* Above 880px --wrap-narrow always resolves to its 720px token, so a figure can
+   reclaim the whole column by pulling out half the difference between the
+   measure and the wrap on each side. Both values are tokens. */
+@media (min-width:880px){
+  .entry__body .prose>figure{margin-inline:calc((var(--measure) - var(--wrap-narrow)) / 2)}
+}
+
+/* Coarse pointers: grow the hit box of a link in running text and of a pager
+   link to 44px. Vertical padding on an inline element moves the hit box and not
+   the line box, so the paragraph keeps its rhythm; the horizontal padding is
+   cancelled by an equal negative margin so the sentence does not open up around
+   the link. Measured at 375px: 20px tall plus 2 x 12px = 44, and the shortest
+   reference name on the page goes from 41px wide to 65px. */
+@media (pointer:coarse){
+  .entry__body .prose p a{padding:var(--s3);margin-inline:calc(-1 * var(--s3))}
+  .entry .pager a{padding-block:var(--s1)}
+}
+
+.jrail__head{margin-bottom:var(--s8)}
+.jfallback{margin-top:var(--s5)}
+.jfallback a{color:var(--ink);text-underline-offset:3px}
+
+/* --------------------------------------------------------- 7. NOT FOUND -- */
+.jmissing{padding-block:calc(var(--header-h) + var(--s7)) var(--sec)}
+
+/* -------------------------------------------------------- 8. NEWSLETTER --
+   The same block as the home page. home.css is not loaded here, so its four
+   rules live in this layer instead. The button bottom-aligns with the input
+   rather than carrying a hand-set top margin. */
+.news{background:var(--night)}
+.news__grid{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.84fr);
+  gap:clamp(32px,5vw,96px);align-items:center;
+}
+.news form{display:grid;gap:var(--s4)}
+.news__row{display:flex;gap:var(--s3);align-items:flex-end}
+.news__row .field{flex:1;min-width:0}
+@media (max-width:820px){
+  .news__grid{grid-template-columns:1fr}
+  .news__row{flex-direction:column;align-items:stretch}
+}
+
+/* ------------------------------------------------------ 9. FORCED COLORS --
+   site.css gives .pcard__media and .jcard__media an edge in high contrast,
+   where every photograph loses its background. The journal's own media boxes
+   and its chips need the same treatment. */
+@media (forced-colors:active){
+  .jlead__media,.jentry__media,.figure-wide img,.prose figure img{border:1px solid CanvasText}
+  .chip{forced-color-adjust:none;background:ButtonFace;color:ButtonText;border-color:ButtonText}
+  .chip[aria-current]{background:Highlight;color:HighlightText;border-color:Highlight}
+  .chip[aria-current] .chip__n,.chip__n{color:inherit}
+  .jmeta b{color:LinkText}
+}

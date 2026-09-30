@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- DEPLOY STEP: replace https://example.com with the live origin -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://example.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://example.com/collection.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://example.com/craftsmanship.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/about.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://example.com/journal.html</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://example.com/contact.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://example.com/product.html?ref=sovereign</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=glacier</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=forest</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=umber</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=lagoon</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=scarlet</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=nocturne</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=ember</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=citrine</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=garnet</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=lime</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://example.com/product.html?ref=frost</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+</urlset>

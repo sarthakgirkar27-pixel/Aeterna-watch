@@ -1,0 +1,218 @@
+/* ThreeUI shared style, the rules the Sable AnimatedTopDock and the CharacterCarousel host use.
+   Copied verbatim from src/shaders/threeui.css (SHA-256 efe44471…), only the font URL is
+   relocated to this folder. Site-specific overrides live in style.css, never here. */
+
+.animated-top-dock-component,
+.threeui-background {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.threeui-background {
+  position: relative;
+  isolation: isolate;
+  background: #030304;
+}
+
+.threeui-background > canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@font-face {
+  font-family: "ThreeUI Fragment Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/fragment-mono.woff2") format("woff2");
+}
+
+.animated-top-dock-component {
+  container-type: inline-size;
+  color: #ecece8;
+  background: #0b0b0b;
+  font-family: "Geist", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.animated-top-dock-component::after {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  content: "";
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+
+.animated-top-dock-component__caption {
+  position: absolute;
+  z-index: 6;
+  color: #62625e;
+  font: 400 9px/1 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.1em;
+}
+
+.animated-top-dock-component {
+  position: relative;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.035), transparent 34%),
+    #080808;
+}
+
+.animated-top-dock__nav {
+  position: absolute;
+  top: clamp(24px, 5cqw, 46px);
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  height: 38px;
+  padding: 4px;
+  overflow: visible;
+  border: 1px solid #292929;
+  border-radius: 11px;
+  background: rgba(14, 14, 14, 0.86);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.48), inset 0 1px rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(18px) saturate(75%);
+  transform: translateX(-50%);
+  isolation: isolate;
+}
+
+.animated-top-dock__item {
+  position: relative;
+  z-index: 6;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  outline: none;
+  color: #858580;
+  background: rgba(21, 21, 20, 0.9);
+  font: 400 10px/1 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  backdrop-filter: blur(14px) saturate(70%);
+  transform-origin: 50% 0;
+  transition: color 0.15s, border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  will-change: width, height, transform;
+  cursor: pointer;
+}
+
+.animated-top-dock__item[data-dock-near="true"],
+.animated-top-dock__item:focus-visible {
+  z-index: 7;
+  color: #ecece8;
+  border-color: #41413e;
+  background: rgba(27, 27, 26, 0.94);
+  box-shadow: 0 7px 16px rgba(0, 0, 0, 0.26);
+}
+
+.animated-top-dock__logo {
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  background: #e8e8e3;
+}
+
+.animated-top-dock__logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.animated-top-dock__link {
+  gap: 6px;
+  width: 94px;
+  padding: 0 9px;
+}
+
+.animated-top-dock__link[aria-pressed="true"] {
+  color: #111;
+  border-color: #e8e8e3;
+  background: #e8e8e3;
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.28);
+}
+
+.animated-top-dock__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  opacity: 0.62;
+  transition: opacity 0.16s;
+}
+
+.animated-top-dock__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.animated-top-dock__item[data-dock-near="true"] .animated-top-dock__icon,
+.animated-top-dock__item:focus-visible .animated-top-dock__icon {
+  opacity: 1;
+}
+
+.animated-top-dock-component__caption {
+  right: 18px;
+  bottom: 16px;
+}
+
+@media (max-width: 600px) {
+  .animated-top-dock__nav {
+    top: 24px;
+    gap: 2px;
+    height: 36px;
+  }
+
+  .animated-top-dock__item {
+    height: 26px !important;
+    transform: none !important;
+  }
+
+  .animated-top-dock__logo {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .animated-top-dock__link {
+    width: auto !important;
+    padding: 0 7px;
+    font-size: 8px;
+    letter-spacing: 0.07em;
+  }
+
+  .animated-top-dock__icon {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-top-dock__item {
+    transform: none !important;
+  }
+}

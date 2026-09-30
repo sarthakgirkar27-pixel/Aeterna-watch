@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#121013">
+  <title>Aeterna collection filmstrip</title>
+  <!-- site change: the caseback is set in the house faces. Same URL as the
+       pages, so it is warm in the cache by the time the deck is started, and
+       it loads without blocking the frame's first paint. -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" media="print" onload="this.media='all'"
+        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Instrument+Sans:wght@400;500;600&display=swap">
+  <style>
+    /* site change: the deck reads at night now. Every colour here is a literal --
+       this document is a separate origin in a sandboxed frame and has none of the
+       site's custom properties. Night tokens mirrored by hand from site.css:
+       --night #121013, --night-2 #1b181c, --night-ink #f2ede5,
+       --night-ink-60 rgba(242,237,229,.62), --brass-lite #c9987a. */
+    :root {
+      color-scheme: dark;
+      font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+      background: #121013;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #121013;
+    }
+
+    body {
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .stage {
+      --pointer-x: 50%;
+      --veil: 0;                       /* 0 browsing, 1 reading a caseback */
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 440px;
+      overflow: hidden;
+      isolation: isolate;
+      perspective: 1450px;
+      cursor: ew-resize;
+      touch-action: none;
+      background:
+        /* The reading veil, and it has to be a BACKGROUND LAYER. .stage is an
+           isolated stacking context, .deck is z-index 2 and the two overlays are 5
+           and 4, so no overlay element can darken the ground without also covering
+           the turned card. Background layers always paint behind content. */
+        linear-gradient(rgba(5, 4, 7, calc(var(--veil) * 0.58)), rgba(5, 4, 7, calc(var(--veil) * 0.58))),
+        /* the sprocket scribe and the perforation rule: same geometry, inverted ink */
+        linear-gradient(90deg, rgba(242, 237, 229, 0.07) 1px, transparent 1px) 50% 0 / 25% 100%,
+        repeating-linear-gradient(
+          0deg,
+          transparent 0,
+          transparent 109px,
+          rgba(242, 237, 229, 0.09) 110px,
+          transparent 111px
+        ),
+        /* the pointer lamp. The authored rgba(255,246,220,.78) blows out on night,
+           so it becomes brass at .13: light falling across the stock, not a glow. */
+        radial-gradient(
+          circle at var(--pointer-x) 48%,
+          rgba(201, 152, 122, calc(0.13 * (1 - var(--veil) * 0.8))),
+          transparent 36%
+        ),
+        #121013;
+    }
+
+    .stage.is-reading { cursor: default; }
+
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      /* mix-blend-mode:multiply returned #121013 on night: the grain vanished
+         silently. Screen makes the same two speckle layers read as dust on stock. */
+      /* site change: this sits ABOVE the cards (z-index 5 against the deck's 2),
+     so any of it left while a caseback is up lands on the type as speckle and
+     reads as blur. It goes fully off while reading, and returns with the strip. */
+  opacity: calc(0.2 * (1 - var(--veil)));
+      background:
+        repeating-radial-gradient(circle at 12% 18%, rgba(242, 237, 229, 0.12) 0 0.5px, transparent 0.7px 4px),
+        repeating-radial-gradient(circle at 78% 71%, rgba(201, 152, 122, 0.1) 0 0.5px, transparent 0.8px 5px);
+      mix-blend-mode: screen;
+    }
+
+    .stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      /* the authored rgba(84,58,29,.19) is warmer and LIGHTER than #121013, so on
+         night it lit the frame edges instead of swallowing them */
+      background: linear-gradient(
+        90deg,
+        rgba(4, 3, 6, 0.66),
+        transparent 16%,
+        transparent 84%,
+        rgba(4, 3, 6, 0.66)
+      );
+    }
+
+    .deck {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      transform-style: preserve-3d;
+    }
+
+    /* site change: .card is a transform carrier and nothing else now, and the two
+       faces are its children. FOUR grouping properties used to sit on this rule and
+       each one forces used transform-style to flat on its own (CSS Transforms 2),
+       so the faces could never separate in depth: overflow:hidden, the opacity and
+       filter entries of will-change, and the loop's own per-frame writes of
+       card.style.opacity (always below 1, because the phase is an eased lerp that
+       never quite arrives) and card.style.filter (blur(0px) is not none).
+       The loop writes --dim and --fx instead; custom properties do not group, and
+       the faces consume them.
+       DO NOT put overflow, opacity, filter, clip-path, mask, contain:paint,
+       isolation or mix-blend-mode back here, and do not widen will-change: the turn
+       goes flat silently, with no error anywhere. */
+    .card {
+      --focus: 0;
+      --dim: 1;
+      --fx: none;
+      --dial: #766a58;                 /* each card overrides this inline */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: clamp(154px, 16.8vw, 238px);
+      aspect-ratio: 0.72;
+      background: #0d0c0f;             /* the sliver seen at the 90 degree crossing */
+      transform-style: preserve-3d;
+      will-change: transform;
+      cursor: pointer;
+    }
+
+    /* A face is a 3D leaf, so clipping and grouping are free here. */
+    .face {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      padding: 7px;
+      border: 1px solid rgba(47, 34, 19, 0.42);
+      border-radius: 10px;
+      opacity: var(--dim);
+      filter: var(--fx);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      appearance: none;
+      outline: none;
+      font: inherit;
+      text-align: left;
+      /* near black: the authored rgba(57,38,19,...) is lighter than #121013 and
+         haloed instead of sinking. Never transition this: --focus changes every
+         frame and the shadow would lag the strip. */
+      box-shadow:
+        0 calc(10px + var(--focus) * 24px) calc(18px + var(--focus) * 36px)
+          rgba(4, 3, 6, calc(0.3 + var(--focus) * 0.3)),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    }
+
+    /* was .card::before. inset on an abspos child resolves against the padding box,
+       so 5px here is 6px from the card edge, exactly as before, on both faces. */
+    .face::before {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      z-index: 3;
+      pointer-events: none;
+      border: 1px solid rgba(28, 22, 14, calc(0.12 + var(--focus) * 0.12));
+    }
+
+    .face--front {
+      z-index: 1;
+      color: #f3e7ce;
+      background: #e7d9bd;
+      /* coplanar faces inside preserve-3d z-fight and shimmer; 1.2px of separation
+         in card space costs nothing visible */
+      transform: translateZ(0.6px);
+      cursor: pointer;
+    }
+
+    .face--back {
+      /* Supersample. The plate is laid out --k times larger and composed back
+         down, so the raster Chromium takes (always device scale here, because
+         the perspective ancestor defeats its scale decomposition) is the right
+         one instead of a 1.46x upsample. Every length below is em or is
+         multiplied by --k, and the container thresholds are scaled to match.
+         Changing --k alone rescales the whole plate correctly. */
+      --k: 1.5;
+      inset: auto;
+      top: 50%;
+      left: 50%;
+      width: calc(100% * var(--k));
+      height: calc(100% * var(--k));
+      font-size: calc(1rem * var(--k));
+      color: #f2ede5;
+      background: #1b181c;
+      border-color: rgba(242, 237, 229, 0.17);
+      border-width: calc(1px * var(--k));
+      border-radius: calc(10px * var(--k));
+      transform: translate(-50%, -50%) rotateY(180deg) translateZ(0.6px) scale(calc(1 / var(--k)));
+      /* no inset hairline: a 55% white line on night is the glow the rules forbid */
+      box-shadow:
+        0 calc((10px + var(--focus) * 24px) * var(--k)) calc((18px + var(--focus) * 36px) * var(--k))
+          rgba(4, 3, 6, calc(0.3 + var(--focus) * 0.3));
+      display: grid;
+      /* head, title, register, mark. The register takes the slack; anything
+         else in the 1fr row gets stretched and opens a hole under the name. */
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      row-gap: calc(clamp(7px, 0.8vw, 12px) * var(--k));
+      padding: calc(clamp(9px, 1vw, 14px) * var(--k));
+      pointer-events: none;            /* or it hit-tests through the front */
+      user-select: text;               /* body is user-select:none; the ref is copyable */
+      cursor: pointer;
+    }
+
+    .face--back::before {
+      inset: calc(5px * var(--k));
+      border-color: rgba(242, 237, 229, calc(0.14 + var(--focus) * 0.1));
+      border-width: calc(1px * var(--k));
+    }
+    /* the ring is drawn in the plate's own scaled space, so it scales too */
+    .face--back:focus-visible,
+    .back__shut:focus-visible {
+      outline-width: calc(2px * var(--k));
+      outline-offset: calc(3px * var(--k));
+    }
+
+    .card.is-open .face--back { pointer-events: auto; }
+    .card.is-open .face--front { pointer-events: none; }
+
+    /* replaces .card:focus-visible. outline is not a grouping property and renders
+       correctly on a transformed element; the ring is always on the face toward the
+       viewer, because the face facing away is inert and cannot hold focus. */
+    .face:focus-visible,
+    .back__shut:focus-visible { outline: 2px solid #c9987a; outline-offset: 3px; }
+
+    /* ----------------------------------------------------------- the caseback --
+       A plate, not a paragraph: a mark row, the reference set in the house
+       serif, then a two-column register of label and value. The labels are
+       visible now -- four unlabelled sentences in one size was the whole of
+       why it read as basic. */
+    .face--back {
+      /* grayscale antialiasing: subpixel rendering on a near-black plate fringes */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      /* The register has to answer to the PLATE's width, not the viewport's: the
+         card floors at 154px, so a 768px window gives a narrower plate than a
+         390px phone does. Safe on this element only -- containment is a grouping
+         property and would flatten .card, but a face is a 3D leaf. */
+      container: plate / inline-size;
+    }
+
+    .back__head {
+      display: flex;
+      align-items: center;
+      gap: calc(clamp(5px, 0.6vw, 8px) * var(--k));
+      padding-bottom: calc(clamp(5px, 0.6vw, 8px) * var(--k));
+      border-bottom: calc(1px * var(--k)) solid rgba(242, 237, 229, 0.17);
+    }
+
+    .back__dial {
+      flex: none;
+      width: 0.5625em;
+      height: 0.5625em;
+      background: var(--dial);
+      box-shadow: inset 0 0 0 calc(1px * var(--k)) rgba(242, 237, 229, 0.28);
+    }
+
+    .back__ref {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font: 500 0.8125em/1 ui-monospace, "SFMono-Regular", monospace;
+      letter-spacing: 0.14em;
+      color: #c9987a;                  /* 6.9:1 on the plate */
+    }
+
+    /* the wordmark is gone: a drawn mark, sized for the thumb, seen as a hairline */
+    .back__shut {
+      flex: none;
+      margin-left: auto;
+      display: grid;
+      place-items: center;
+      width: 1.75em;
+      height: 1.75em;
+      margin: -0.375em -0.375em -0.375em 0;   /* hit area outruns the glyph */
+      padding: 0;
+      appearance: none;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      color: rgba(242, 237, 229, 0.55);
+      transition: color 160ms cubic-bezier(.3, .7, .4, 1);
+      position: relative;
+    }
+
+    /* the mark stays a hairline; the target it answers to is 44 square */
+    .back__shut::after {
+      content: "";
+      position: absolute;
+      inset: -0.5em;
+    }
+
+    .back__shut svg {
+      width: 0.5em;
+      height: 0.5em;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.4;
+      stroke-linecap: round;
+    }
+
+    .back__shut:hover { color: #f2ede5; }
+
+    .back__title {
+      display: grid;
+      align-content: start;
+      gap: 0.1875em;
+      padding-top: calc(clamp(4px, 0.5vw, 7px) * var(--k));
+    }
+
+    .back__name {
+      font-family: "Bodoni Moda", "Bodoni 72", Didot, "Times New Roman", serif;
+      font-weight: 400;
+      font-size: clamp(1.1875em, calc(1.5vw * var(--k)), 1.5625em);
+      line-height: 1.05;
+      letter-spacing: -0.005em;
+      color: #f2ede5;
+    }
+
+    .back__sub {
+      font: 500 0.6875em/1.25 ui-monospace, "SFMono-Regular", monospace;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(242, 237, 229, 0.58);   /* 5.6:1 on the plate */
+    }
+
+    /* label and value, aligned. The label column is sized to the longest word
+       so the values start on one axis down the whole plate. */
+    .back__facts {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-content: center;
+      column-gap: calc(clamp(8px, 0.9vw, 13px) * var(--k));
+      row-gap: calc(clamp(4px, 0.5vw, 7px) * var(--k));
+      min-height: 0;
+      overflow: hidden;
+      margin: 0;
+    }
+
+    .back__facts dt {
+      font: 500 0.625em/1.5 ui-monospace, "SFMono-Regular", monospace;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(242, 237, 229, 0.58);
+      padding-top: 0.1875em;            /* optical: mono cap to sans x-height */
+    }
+
+    .back__facts dd {
+      margin: 0;
+      font-family: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 0.875em;
+      font-weight: 500;
+      line-height: 1.35;
+      color: #f2ede5;
+      text-wrap: pretty;
+    }
+
+    /* These query the plate's CONTENT box, which is why the numbers look small:
+       a 238px card is a 218px content box. Only block-axis properties are set
+       here -- changing inline padding inside an inline-size query feeds back
+       into the query itself. */
+
+    /* the label column cannot hold its own axis below this, so the register
+       stacks: label over value, same order, same rhythm */
+    @container plate (max-width: 285px) {
+      .back__facts { grid-template-columns: minmax(0, 1fr); row-gap: 0.125em; }
+      .back__facts dt { padding-top: 0.25em; }
+      .back__facts dt:first-child { padding-top: 0; }
+      .face--back { row-gap: calc(5px * var(--k)); padding-block: calc(8px * var(--k)); }
+      /* the subtitle is one line or it is noise: tracked down so it fits */
+      .back__sub { font-size: 0.625em; letter-spacing: 0.08em; white-space: nowrap; }
+      .back__head { padding-bottom: calc(4px * var(--k)); }
+      .back__title { padding-top: calc(2px * var(--k)); }
+      .back__movement { padding-top: calc(4px * var(--k)); }
+      .back__name { font-size: 1em; }
+      /* one step down on the values: it buys about 2px a line across the whole
+         register, which is what lets all three facts stay on a phone plate.
+         11px is the floor and it is still above the mono labels. */
+      .back__facts dd { font-size: 0.8125em; line-height: 1.3; }
+    }
+
+    /* Stacked, the strap runs to three or four lines and leaves the register
+       with no slack at all -- it fits at one plate width and clips at the next.
+       So the strap is a two-column luxury: below that the plate carries dial and
+       case, which is what the front already promises, and the full strap is in
+       the grid and on the product page that the deck's own intro points at. */
+    @container plate (max-width: 285px) {
+      .back__facts dt:nth-of-type(3),
+      .back__facts dd:nth-of-type(3) { display: none; }
+    }
+
+    /* The smallest plates -- a 154px card at a 700-900px window, or a 150px card
+       on a 320px phone -- cannot hold the subtitle as well as legible facts, and
+       legibility is the point. The case and the edition are the first thing the
+       register says anyway, and the front's role line carries the case. */
+    @container plate (max-width: 210px) {
+      .back__sub { display: none; }
+    }
+
+    .back__movement {
+      padding-top: calc(clamp(5px, 0.6vw, 9px) * var(--k));
+      border-top: calc(1px * var(--k)) solid rgba(242, 237, 229, 0.17);
+      font: 500 0.625em/1.4 ui-monospace, "SFMono-Regular", monospace;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(242, 237, 229, 0.58);
+      text-wrap: balance;
+    }
+
+    .portrait {
+      position: absolute;
+      inset: 7px 7px 25%;
+      overflow: hidden;
+      background: #766a58;
+    }
+
+    .portrait img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(calc(1.04 + (1 - var(--focus)) * 0.06));
+      filter:
+        sepia(calc((1 - var(--focus)) * 0.24))
+        saturate(calc(0.66 + var(--focus) * 0.34))
+        contrast(1.04);
+    }
+
+    .footer {
+      position: absolute;
+      right: 7px;
+      bottom: 7px;
+      left: 7px;
+      height: calc(25% - 7px);
+      display: grid;
+      grid-template-columns: clamp(26px, 3.2vw, 43px) 1fr;
+      align-items: center;
+      gap: clamp(6px, 0.7vw, 11px);
+      padding: clamp(7px, 0.8vw, 12px);
+      color: #f0dfc2;
+      background: #171612;
+      text-align: left;
+    }
+
+    .index {
+      display: grid;
+      width: clamp(23px, 2.7vw, 37px);
+      aspect-ratio: 1;
+      place-items: center;
+      border: 1px solid #ce5d20;
+      border-radius: 50%;
+      color: #d86724;
+      font: 600 clamp(7px, 0.68vw, 11px)/1 ui-monospace, "SFMono-Regular", monospace;
+    }
+
+    .meta {
+      min-width: 0;
+    }
+
+    .name,
+    .role {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .name {
+      color: #f3e6cc;
+      font-size: clamp(8px, 0.86vw, 13px);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+    }
+
+    .role {
+      margin-top: clamp(3px, 0.35vw, 5px);
+      color: #d46a27;
+      font-size: clamp(5px, 0.48vw, 7px);
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      line-height: 1;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 650px) {
+      .stage {
+        min-height: 560px;
+        cursor: ns-resize;
+        background:
+          linear-gradient(rgba(5, 4, 7, calc(var(--veil) * 0.58)), rgba(5, 4, 7, calc(var(--veil) * 0.58))),
+          linear-gradient(90deg, rgba(242, 237, 229, 0.07) 1px, transparent 1px) 50% 0 / 50% 100%,
+          repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 87px,
+            rgba(242, 237, 229, 0.09) 88px,
+            transparent 89px
+          ),
+          radial-gradient(
+            circle at 50% 50%,
+            rgba(201, 152, 122, calc(0.13 * (1 - var(--veil) * 0.8))),
+            transparent 37%
+          ),
+          #121013;
+      }
+
+      /* site change: the vignette stayed 90deg while the strip runs vertically
+         here, so it veiled the wrong axis. */
+      .stage::after {
+        background: linear-gradient(
+          180deg,
+          rgba(4, 3, 6, 0.66),
+          transparent 14%,
+          transparent 86%,
+          rgba(4, 3, 6, 0.66)
+        );
+      }
+
+      .card {
+        width: clamp(142px, 47vw, 180px);
+      }
+
+      .back__movement { letter-spacing: 0.1em; }
+    }
+
+    @media (max-width: 380px) {
+      .back__name { font-size: 0.9375em; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card {
+        will-change: auto;
+      }
+    }
+  </style>
+<style data-character-carousel-focus>
+:root { --character-carousel-scale: 1; }
+html, body, .stage { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+.stage { min-height: 0 !important; }
+.deck { transform: scale(var(--character-carousel-scale)); transform-origin: 50% 50%; }
+</style><script data-character-carousel-controls>
+(function () {
+  var nativeFrame = window.requestAnimationFrame.bind(window);
+  var clock = { real: null, virtual: null };
+  var controls = window.__CHARACTER_CAROUSEL_CONTROLS = { speed: 1, scale: 1, paused: false };
+  window.__CHARACTER_CAROUSEL_NOW = function () {
+    return clock.virtual === null ? performance.now() : clock.virtual;
+  };
+  window.requestAnimationFrame = function (callback) {
+    function tick(realTime) {
+      if (clock.real === null) {
+        clock.real = realTime;
+        clock.virtual = realTime;
+      } else {
+        if (!controls.paused) clock.virtual += (realTime - clock.real) * controls.speed;
+        clock.real = realTime;
+      }
+      if (controls.paused) {
+        return nativeFrame(tick);
+      }
+      callback(clock.virtual);
+    }
+    return nativeFrame(tick);
+  };
+  window.addEventListener('message', function (event) {
+    if (!event.data || event.data.type !== 'character-carousel-controls') return;
+    var next = event.data.controls || {};
+    if (Number.isFinite(next.speed)) controls.speed = Math.max(0, Math.min(2.5, next.speed));
+    if (Number.isFinite(next.scale)) controls.scale = Math.max(0.7, Math.min(1.3, next.scale));
+    controls.paused = Boolean(next.paused);
+    document.documentElement.style.setProperty('--character-carousel-scale', String(controls.scale));
+  });
+  /* site addition: the host engages and releases this deck, so Escape inside the frame is reported back to it */
+  window.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') window.parent.postMessage({ type: 'character-carousel-release' }, '*');
+  });
+})();
+</script></head>
+<body>
+  <main class="stage" id="stage" aria-label="Aeterna collection filmstrip, twelve references">
+    <h1 class="sr-only">Aeterna collection filmstrip</h1>
+    <p class="sr-only">Move the pointer, scroll, or use the arrow keys to browse the twelve references. Rest on a reference, or press Enter on it, to bring it to the centre and turn it over to its caseback. Escape closes a caseback; Escape again hands the keyboard back to the page.</p>
+    <div class="deck" id="deck" data-testid="filmstrip"></div>
+  </main>
+
+  <script>
+    (() => {
+      /* The case is the choice: one movement, twelve cases. label is what the
+         front's role line has always said, alloy is what the caseback says. */
+      const CASE_KIND = {
+        titanium: { label: "Titanium",  alloy: "Grade 5 titanium" },
+        rose:     { label: "Rose gold", alloy: "18k rose gold" },
+        king:     { label: "King gold", alloy: "18k king gold" }
+      };
+
+      /* Calibre 312, identical on all twelve. From assets/catalogue.js MOVEMENT:
+         name, frequency ("4 Hz, 28,800 beats an hour"), reserve ("72 hours"). */
+      const CASEBACK = "Calibre 312 · 4 Hz · 72 h";
+
+      /* The twelve, in catalogue order. SOURCE OF TRUTH: assets/catalogue.js
+         WATCHES. This frame is a separate document in a sandbox="allow-scripts"
+         iframe, so it has an opaque origin and cannot read or fetch that file.
+         ONLY fields that cannot drift are mirrored: slug, name, ref, case, dial,
+         dialHex and edition are authored constants there and none of them changes
+         with stock or price. price, priceText, stock, availability and
+         availabilityText are deliberately ABSENT: they are the volatile fields, a
+         stale price or a stale "Final 2 of 10" is worse than none, and both live
+         in the grid and the quick view, which the deck intro already points at. */
+      const profiles = [
+        ["forest",    "Forest",    "AE-R01", "rose",     "Forest green",          "#2f4a33", 34, "Green alligator over green rubber, rose gold folding clasp"],
+        ["scarlet",   "Scarlet",   "AE-T01", "titanium", "Scarlet",               "#96231f", 26, "Black alligator over scarlet rubber, titanium folding clasp"],
+        ["glacier",   "Glacier",   "AE-T02", "titanium", "Ice blue",              "#5f9ec2", 26, "Navy alligator over blue rubber, titanium folding clasp"],
+        ["citrine",   "Citrine",   "AE-T03", "titanium", "Citrine yellow",        "#d4a017", 26, "Black alligator with yellow stitch over black rubber, titanium clasp"],
+        ["ember",     "Ember",     "AE-T04", "titanium", "Ember orange",          "#c15a1e", 26, "Black alligator over orange rubber, titanium folding clasp"],
+        ["lagoon",    "Lagoon",    "AE-T05", "titanium", "Lagoon teal",           "#1f8a8c", 26, "Navy alligator with teal stitch over navy rubber, titanium clasp"],
+        ["umber",     "Umber",     "AE-R02", "rose",     "Burnt umber",           "#6b4a34", 34, "Brown alligator over taupe rubber, rose gold folding clasp"],
+        ["nocturne",  "Nocturne",  "AE-T06", "titanium", "Nocturne violet",       "#3b3a6b", 26, "Navy alligator over navy rubber, titanium folding clasp"],
+        ["lime",      "Lime",      "AE-T07", "titanium", "Lime",                  "#7fa621", 26, "Black alligator with lime stitch over black rubber, titanium clasp"],
+        ["garnet",    "Garnet",    "AE-T08", "titanium", "Garnet",                "#6d2b35", 26, "Burgundy alligator over grey rubber, titanium folding clasp"],
+        ["sovereign", "Sovereign", "AE-K01", "king",     "Gold skeleton on blue", "#1e3566", 10, "Blue alligator over navy rubber, king gold folding clasp"],
+        ["frost",     "Frost",     "AE-T09", "titanium", "Frost silver",          "#c9ccce", 26, "White alligator over white rubber, titanium folding clasp"]
+      ].map(([slug, name, ref, kind, dial, dialHex, edition, strap]) => ({
+        slug, name, ref, dial, dialHex, edition, strap,
+        portrait: `watches/${slug}-1.jpg`,
+        /* identical to the twelve role strings authored before, all of which were
+           exactly caseLabel + " · " + dial, so role stops being authored */
+        role: `${CASE_KIND[kind].label} · ${dial}`,
+      kindLabel: CASE_KIND[kind].label,
+        caseLine: `${CASE_KIND[kind].alloy}, 44 mm`
+      }));
+
+      const now = window.__CHARACTER_CAROUSEL_NOW;
+      const stage = document.querySelector("#stage");
+      const deck = document.querySelector("#deck");
+
+      const cards = [], fronts = [], backs = [], shuts = [];
+      profiles.forEach((p, index) => {
+        const card = document.createElement("div");      /* was a <button> */
+        card.className = "card";
+        card.dataset.index = String(index);
+        card.dataset.slug = p.slug;
+        card.style.setProperty("--dial", p.dialHex);
+        card.innerHTML = `
+          <button class="face face--front" type="button"
+                  aria-expanded="false" aria-controls="fs-back-${p.slug}"
+                  aria-label="${p.name}, ${p.role}. Turn the print over for the caseback.">
+            <span class="portrait">
+              <img src="${p.portrait}" alt="Aeterna Chronographe 312 in the ${p.name} colourway, ${p.role}">
+            </span>
+            <span class="footer">
+              <span class="index">${String(index + 1).padStart(2, "0")}</span>
+              <span class="meta">
+                <span class="name">${p.name}</span>
+                <span class="role">${p.role}</span>
+              </span>
+            </span>
+          </button>
+          <div class="face face--back" id="fs-back-${p.slug}" role="group" tabindex="-1"
+               inert aria-hidden="true"
+               aria-label="${p.name}, caseback, reference ${p.ref}">
+            <span class="back__head">
+            <span class="back__dial" aria-hidden="true"></span>
+            <span class="back__ref">${p.ref}</span>
+            <button class="back__shut" type="button" tabindex="-1"
+                    aria-label="Turn ${p.name} back over">
+              <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                <path d="M1.5 1.5l9 9M10.5 1.5l-9 9"/>
+              </svg>
+            </button>
+          </span>
+          <span class="back__title">
+            <span class="back__name">${p.name}</span>
+            <span class="back__sub">${p.kindLabel} &middot; ${p.edition} pieces</span>
+          </span>
+          <dl class="back__facts">
+            <dt>Dial</dt><dd>${p.dial}</dd>
+            <dt>Case</dt><dd>${p.caseLine}</dd>
+            <dt>Strap</dt><dd>${p.strap}</dd>
+          </dl>
+          <span class="back__movement">${CASEBACK}</span>
+          </div>`;
+        deck.append(card);
+        cards.push(card);
+        fronts.push(card.querySelector(".face--front"));
+        backs.push(card.querySelector(".face--back"));
+        shuts.push(card.querySelector(".back__shut"));
+      });
+
+      const count = cards.length;
+      const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const hoverable = matchMedia("(hover: hover) and (pointer: fine)").matches;
+      /* One source for the break, so the pointer maths and the CSS compact branch
+         agree at exactly 650px. innerWidth < 650 did not: at 650 the layout was
+         compact and the drive was still horizontal. */
+      const compactMQ = matchMedia("(max-width: 650px)");
+
+      const BAND = 0.12;      /* the strip's rest: the middle 12% does not scroll */
+      const DWELL = reducedMotion ? 420 : 260;
+      const REARM = 24;       /* px of pointer travel before a dwell may arm again */
+      const DRIFT = 54;       /* px of travel while reading before the card closes */
+      const REACH = 3.2;      /* slots: beyond this a card is a ghost, not a target */
+      const TAP = 14;         /* px: under this a touch is a tap, over it a drag */
+      const FLIP_OPEN = 620;  /* --d3, entrance */
+      const FLIP_SHUT = 300;  /* --d2, state change */
+
+      const flip = new Float32Array(count);     /* raw turn progress, 0..1 */
+      const shown = new Uint8Array(count);      /* 0 front toward viewer, 1 back */
+      const marked = new Uint8Array(count);     /* last aria-current written */
+
+      const state = {
+        phase: 3, target: 3, base: 3,
+        pointerX: 0, pointerY: 0,
+        active: false,
+        lastInput: now(),
+        open: null,
+        veil: 0, veilPainted: -1,
+        dwellIndex: null, stillSince: now(),
+        rearm: true, rearmTravel: 0,
+        drift: 0,
+        rawX: 0, rawY: 0, hasRaw: false,
+        tap: null, dragged: false
+      };
+
+      /* easeInOutCubic. One curve, so an interrupted turn interpolates from where
+         it is instead of jumping; the asymmetry comes from the two durations. */
+      function ease3(u) { return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; }
+
+      function wrappedDelta(index, phase) {
+        let delta = index - phase;
+        while (delta > count / 2) delta -= count;
+        while (delta < -count / 2) delta += count;
+        return delta;
+      }
+
+      function nearestIndex() { return (Math.round(state.phase) % count + count) % count; }
+
+      /* The drive, dead-banded. At |axis| = 1 it is still exactly +/-span, so the
+         strip's end-to-end reach is unchanged; inside the middle BAND it is flat,
+         which is what gives the strip somewhere to stand still. */
+      function drive(axis, span) {
+        const over = Math.abs(axis) - BAND;
+        return over <= 0 ? 0 : Math.sign(axis) * (over / (1 - BAND)) * span;
+      }
+
+      function moveTo(index) {
+        const current = nearestIndex();
+        let delta = index - current;
+        if (delta > count / 2) delta -= count;
+        if (delta < -count / 2) delta += count;
+        state.base += delta;
+        state.target = state.base;
+        state.active = false;
+        state.lastInput = now();
+      }
+
+      /* The face swap. Called from the loop at the frame the card crosses edge on,
+         so nothing is ever announced, focusable or clickable while facing away.
+         inert does tab order and the a11y tree together; aria-hidden and the
+         tabindex writes are the fallback where inert is unsupported. */
+      function setFaces(index, backUp) {
+        const front = fronts[index], back = backs[index], shut = shuts[index];
+        const incoming = backUp ? back : front;
+        const outgoing = backUp ? front : back;
+        const hadFocus = outgoing === document.activeElement
+          || outgoing.contains(document.activeElement);
+        incoming.removeAttribute("inert");
+        incoming.removeAttribute("aria-hidden");
+        (backUp ? shut : front).removeAttribute("tabindex");
+        /* focus the incoming face BEFORE inerting the outgoing one, or focus
+           falls to the body first and never comes back */
+        if (hadFocus) { try { incoming.focus({ preventScroll: true }); } catch (e) { /* gone */ } }
+        outgoing.setAttribute("inert", "");
+        outgoing.setAttribute("aria-hidden", "true");
+        (backUp ? front : shut).setAttribute("tabindex", "-1");
+      }
+
+      /* Re-anchor so the card lands at an exact integer phase, then hold. This is
+         what makes one click or one dwell enough: the card is centred AND turned
+         in one gesture, with no dependence on the cursor still being over it. */
+      function openAt(index) {
+        if (state.open === index) return;
+        if (state.open !== null) closeCard();
+        const slot = Math.round(state.phase);
+        let delta = index - ((slot % count + count) % count);
+        if (delta > count / 2) delta -= count;
+        if (delta < -count / 2) delta += count;
+        state.base = slot + delta;            /* (base mod count) === index */
+        state.target = state.base;
+        state.active = false;
+        state.open = index;
+        state.drift = 0;
+        state.dwellIndex = null;
+        state.lastInput = now();
+        cards[index].classList.add("is-open");
+        fronts[index].setAttribute("aria-expanded", "true");
+        stage.classList.add("is-reading");
+      }
+
+      function closeCard() {
+        const index = state.open;
+        if (index === null) return;
+        state.open = null;
+        state.drift = 0;
+        /* A dwell may not arm again until the pointer has actually travelled.
+           Without this a pointer resting off centre closes on drift, the strip
+           glides back under it, stillness is satisfied because the hand has not
+           moved, and the card reopens forever. */
+        state.rearm = false;
+        state.rearmTravel = 0;
+        state.stillSince = now();
+        state.lastInput = now();
+        state.dwellIndex = null;
+        cards[index].classList.remove("is-open");
+        fronts[index].setAttribute("aria-expanded", "false");
+        stage.classList.remove("is-reading");
+        /* Focus is not moved here: the back is still toward the viewer. setFaces()
+           hands it back to the front button at the edge-on crossing. */
+      }
+
+      fronts.forEach((front, index) => {
+        front.addEventListener("click", () => {
+          if (state.dragged) { state.dragged = false; return; }
+          if (state.open === index) closeCard(); else openAt(index);
+        });
+        front.addEventListener("focus", () => {
+          if (state.open !== null && state.open !== index) closeCard();
+          if (state.open === null) moveTo(index);
+        });
+      });
+
+      shuts.forEach((shut) => {
+        shut.addEventListener("click", (event) => { event.stopPropagation(); closeCard(); });
+      });
+
+      /* site change: the caseback itself closes on click, so "tap it again" is
+         true anywhere on the card and not only on the Close control. The shut
+         button stops propagation, so it never fires twice. The keyboard route is
+         the Close button and Escape, so this adds no keyboard-only trap. */
+      backs.forEach((back, index) => {
+        back.addEventListener("click", () => { if (state.open === index) closeCard(); });
+      });
+
+      /* Which card is under the cursor, hit-tested by the browser rather than by
+         maths in the loop. It fires as the strip slides too, which is the point:
+         every new card resets the stillness clock, so nothing can open while the
+         strip is moving. Cards beyond REACH slots are the 13%-opacity ghosts. */
+      stage.addEventListener("pointerover", (event) => {
+        if (!hoverable || state.open !== null) return;
+        const card = event.target.closest(".card");
+        let index = null;
+        if (card) {
+          const i = Number(card.dataset.index);
+          if (Math.abs(wrappedDelta(i, state.phase)) <= REACH) index = i;
+        }
+        if (state.dwellIndex !== index) { state.dwellIndex = index; state.stillSince = now(); }
+      });
+
+      stage.addEventListener("pointermove", (event) => {
+        /* A finger that has not yet travelled TAP owns the strip: touch-action is
+           none, so without this the strip scrolls under the finger before the
+           click fires and the tap lands on a card the user never aimed at. */
+        if (event.pointerType !== "mouse" && state.tap && state.tap.id === event.pointerId) {
+          state.tap.moved = Math.hypot(event.clientX - state.tap.x, event.clientY - state.tap.y);
+          if (state.tap.moved <= TAP) return;
+          state.dragged = true;
+        }
+
+        const travel = state.hasRaw
+          ? Math.hypot(event.clientX - state.rawX, event.clientY - state.rawY) : 0;
+        state.rawX = event.clientX; state.rawY = event.clientY; state.hasRaw = true;
+
+        /* Held while a card is turned: no target write, no lamp move. A small
+           wander reaching for Close does nothing; a decisive sweep browses again. */
+        if (state.open !== null) {
+          state.drift += travel;
+          if (state.drift > DRIFT) closeCard();
+          return;
+        }
+
+        const rect = stage.getBoundingClientRect();
+        const nx = Math.max(-1, Math.min(1, ((event.clientX - rect.left) / rect.width - 0.5) * 2));
+        const ny = Math.max(-1, Math.min(1, ((event.clientY - rect.top) / rect.height - 0.5) * 2));
+        const compact = compactMQ.matches;
+        state.pointerX = nx;
+        state.pointerY = ny;
+        state.active = true;
+        state.target = state.base + (compact ? drive(ny, 2.2) : drive(nx, 3.1));
+        state.lastInput = now();
+        stage.style.setProperty("--pointer-x", `${(nx + 1) * 50}%`);
+
+        if (!state.rearm) {
+          state.rearmTravel += travel;
+          if (state.rearmTravel > REARM) state.rearm = true;
+        }
+        if (travel > 3) state.stillSince = state.lastInput;   /* a shaky hand is still still */
+      });
+
+      stage.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse") {
+          if (state.open !== null && !event.target.closest(".card")) closeCard();
+          return;
+        }
+        state.dragged = false;
+        state.tap = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: 0 };
+        if (state.open !== null && !event.target.closest(".card")) closeCard();
+      });
+      stage.addEventListener("pointerup", () => { state.tap = null; });
+      stage.addEventListener("pointercancel", () => { state.tap = null; state.dragged = false; });
+
+      stage.addEventListener("pointerleave", () => {
+        state.tap = null;
+        state.hasRaw = false;
+        state.dwellIndex = null;
+        if (state.open !== null) { closeCard(); return; }   /* and do NOT reset the target while held */
+        state.active = false;
+        state.pointerX = 0;
+        state.pointerY = 0;
+        state.target = state.base;
+        stage.style.setProperty("--pointer-x", "50%");
+      });
+
+      stage.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        const direction = Math.sign(Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX);
+        if (!direction) return;
+        if (state.open !== null) closeCard();      /* reading under a sliding strip is the thing to avoid */
+        state.base += direction;
+        state.target = state.base;
+        state.active = false;
+        state.lastInput = now();
+      }, { passive: false });
+
+      addEventListener("keydown", (event) => {
+        const forward = event.key === "ArrowRight" || event.key === "ArrowDown";
+        const backward = event.key === "ArrowLeft" || event.key === "ArrowUp";
+        if (!forward && !backward) return;
+        event.preventDefault();
+        if (state.open !== null) closeCard();
+        state.base += forward ? 1 : -1;
+        state.target = state.base;
+        state.active = false;
+        state.lastInput = now();
+      });
+
+      /* Escape, layered. The injected release listener is window.addEventListener
+         ("keydown", fn) with no capture flag, i.e. the LAST node in the
+         propagation path, so a document-bubble listener always runs first. First
+         press closes the caseback and stops there; second press finds nothing
+         open, falls through, bubbles to window and releases the deck to the host
+         exactly as today. The pinned injected block stays byte-identical. */
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape" || state.open === null) return;
+        event.stopPropagation();
+        closeCard();
+      });
+
+      let previousTime = now();
+
+      function render(time) {
+        const deltaTime = Math.min(32, time - previousTime);
+        previousTime = time;
+        const ease = reducedMotion ? 1 : 1 - Math.pow(0.001, deltaTime / 1000);
+
+        /* site change: the authored idle drift ignores prefers-reduced-motion,
+           so a visitor who asked for no motion got cards moving by themselves
+           forever. The drift is now gated on the same flag the easing uses, and
+           on the open state: otherwise after 3.6s of reading the sine drift
+           slides the strip out from under the card being read. */
+        if (!reducedMotion && !state.active && state.open === null && time - state.lastInput > 3600) {
+          const idle = time - state.lastInput - 3600;
+          state.target = state.base + Math.sin(idle * 0.00042) * 2.45;
+        }
+
+        /* The dwell. Four booleans in the loop that already has the clock and the
+           numbers: no timers, nothing to tear down. It arms on ANY of the twelve,
+           and opening pulls that card to the centre. */
+        if (hoverable && state.open === null && state.rearm && state.dwellIndex !== null
+            && Math.abs(state.target - state.phase) < 0.02
+            && time - state.stillSince > DWELL) {
+          openAt(state.dwellIndex);
+        }
+
+        state.phase += (state.target - state.phase) * ease;
+
+        /* The room takes a second step down while a caseback is up. ease is 1
+           under reduced motion, so this snaps with the turn. One write, on change. */
+        const veilGoal = state.open === null ? 0 : 1;
+        state.veil += (veilGoal - state.veil) * ease;
+        if (Math.abs(state.veil - veilGoal) < 0.002) state.veil = veilGoal;
+        if (state.veil !== state.veilPainted) {
+          state.veilPainted = state.veil;
+          stage.style.setProperty("--veil", state.veil.toFixed(3));
+        }
+
+        const compact = compactMQ.matches;
+        const activeIndex = nearestIndex();
+        const horizontalSpacing = Math.min(168, Math.max(112, innerWidth * 0.116));
+        const verticalSpacing = Math.min(122, Math.max(88, innerHeight * 0.112));
+
+        cards.forEach((card, index) => {
+          /* The turn. Advanced here, in the same statement family that owns the
+             inline transform, so there is no second writer and nothing to
+             defend. It runs on the injected virtual clock, so it freezes when the
+             host posts paused and follows the host's speed; a CSS transition
+             would do neither. reducedMotion snaps it, with no media query. */
+          const goal = index === state.open ? 1 : 0;
+          if (flip[index] !== goal) {
+            if (reducedMotion) {
+              flip[index] = goal;
+            } else {
+              const step = deltaTime / (goal === 1 ? FLIP_OPEN : FLIP_SHUT);
+              flip[index] = goal === 1
+                ? Math.min(1, flip[index] + step)
+                : Math.max(0, flip[index] - step);
+            }
+          }
+          const raw = flip[index];
+          const turn = raw === 0 ? 0 : (raw === 1 ? 1 : ease3(raw));
+
+          /* The face swap happens exactly at edge on, where the geometry says the
+             other face is now toward the viewer. */
+          const backUp = turn < 0.5 ? 0 : 1;
+          if (shown[index] !== backUp) { shown[index] = backUp; setFaces(index, backUp === 1); }
+
+          const delta = wrappedDelta(index, state.phase);
+          const distance = Math.abs(delta);
+          const focus = Math.exp(-distance * distance * 1.28);
+          const side = Math.max(0, 1 - distance / 5);
+          const direction = Math.sign(delta);
+          const open = index === state.open;
+
+          const x = compact
+            ? delta * 24 + Math.sin(delta * 0.9) * 25
+            : delta * horizontalSpacing;
+          const y = compact
+            ? delta * verticalSpacing
+            : distance * 8 + state.pointerY * focus * 10 * (1 - turn);
+          /* the card comes forward as it turns: 145 + 30 against a 1450px
+             perspective is ~1.14 of extra foreshortening, which is what makes the
+             caseback's type legible without a second type scale */
+          const z = focus * 145 - distance * 148 + turn * 30;
+          const scale = 0.54 + side * 0.15 + focus * 0.54 + turn * 0.055;
+          /* and it squares up to the viewer: the pointer parallax eases out over
+             the turn, so the card stops wobbling as it comes round */
+          const rotateX = compact ? delta * 2.1 : -state.pointerY * focus * 3.5 * (1 - turn);
+          const rotateY = (compact
+            ? -delta * 5
+            : -direction * (distance > 0.2 ? 14 + Math.min(distance, 3) * 5 : 0)
+              + state.pointerX * focus * 3 * (1 - turn))
+            + turn * 180;
+          const rotateZ = compact ? delta * -1.4 : delta * 0.7;
+
+          /* The other eleven fall into the night while one is being read. */
+          const soften = open ? 1 : 1 - 0.62 * state.veil;
+          const blur = Math.max(0, distance - 1.5) * 0.38 + (open ? 0 : 1.1 * state.veil);
+
+          card.style.setProperty("--focus", focus.toFixed(4));
+          /* --dim and --fx, NOT style.opacity and style.filter: those are grouping
+             properties and writing them here is what kept .card flat. Custom
+             properties inherit, so the faces get them and every authored formula
+             that reads --focus still works verbatim. 'none' rather than
+             blur(0px) drops the filter group from the cards that matter. */
+          /* exactly 1 on the open card, never 0.9995: the phase is an eased lerp
+             that never quite arrives, and a fractional opacity is a composited
+             layer of its own that the plate does not need. */
+          card.style.setProperty("--dim", open ? "1"
+            : Math.max(0.05, Math.max(0.13, side * 0.76 + focus * 0.24) * soften).toFixed(4));
+          card.style.setProperty("--fx", (!open && blur > 0.01) ? `blur(${blur.toFixed(2)}px)` : "none");
+          card.style.zIndex = String(Math.round(1000 - distance * 100));
+          card.style.transform = [
+            "translate(-50%, -50%)",
+            `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, ${z.toFixed(2)}px)`,
+            `rotateX(${rotateX.toFixed(2)}deg)`,
+            `rotateY(${rotateY.toFixed(2)}deg)`,
+            `rotateZ(${rotateZ.toFixed(2)}deg)`,
+            `scale(${scale.toFixed(4)})`
+          ].join(" ");
+
+          /* site change: aria-current was rewritten on all twelve every frame,
+             about 720 accessibility-tree mutations a second. Some engines
+             announce on mutation regardless of value, and it matters far more now
+             that this element is a disclosure. Write on change only, and write it
+             on the button, which is the node a screen-reader user lands on. */
+          const isCurrent = index === activeIndex ? 1 : 0;
+          if (marked[index] !== isCurrent) {
+            marked[index] = isCurrent;
+            fronts[index].setAttribute("aria-current", isCurrent ? "true" : "false");
+          }
+        });
+
+        requestAnimationFrame(render);
+      }
+
+      requestAnimationFrame(render);
+    })();
+  </script>
+</body>
+</html>

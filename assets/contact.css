@@ -1,0 +1,255 @@
+/* AETERNA — contact page compositions. Builds only on tokens from site.css and
+   the shapes in editorial.css. Nothing here restyles a shared component: the
+   page adds the enquiry form, the bag summary, the drawn plan of the atelier
+   and the policy index, and stops. */
+
+/* --------------------------------------------------------- DEEP LINKING --
+   Nine footer links land on this page by hash and the header is fixed, so every
+   target inside main has to leave room for the bar above it. */
+main [id]{scroll-margin-top:calc(var(--header-h) + var(--s5))}
+.accordion__item:target .accordion__btn{color:var(--brass)}
+
+/* The stat strip closes the opener with its own rule and --s7 of padding, so
+   the opener does not need a second full section break underneath it. */
+.page-head .stats{margin-top:var(--s7)}
+.page-head:has(.stats){padding-bottom:var(--s7)}
+
+/* ------------------------------------------------------------- ENQUIRY -- */
+.order__grid{margin-top:var(--s8)}
+.order__main{min-width:0}
+
+.enquiry{display:grid;gap:var(--s7)}
+/* Name, email and country are short; the reference carries twelve long option
+   labels and a hint, so it takes the whole row and never clips. */
+.enquiry__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s5)}
+.field--wide{grid-column:1/-1}
+@media (max-width:1200px){.enquiry__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.enquiry__grid{grid-template-columns:1fr}}
+
+/* The validation summary. Empty until a submit fails, and then it is the first
+   thing in the form, so it is read before the fields it is talking about. */
+.enquiry__alert{
+  margin:0;padding:var(--s4) var(--s5);
+  background:var(--paper-card);border:1px solid var(--err);border-radius:var(--r-sm);
+  font:500 var(--t-sm)/1.5 var(--f-sans);color:var(--err);
+}
+.enquiry__alert:empty{display:none}
+
+.enquiry__noscript{
+  margin:0 0 var(--s5);padding:var(--s5);
+  background:var(--paper-sunk);border-radius:var(--r-sm);
+  font:400 var(--t-sm)/1.6 var(--f-sans);color:var(--ink-70);
+}
+.enquiry__noscript a{color:var(--ink);text-underline-offset:3px}
+
+.enquiry__foot{display:grid;gap:var(--s4);justify-items:start}
+.enquiry__done{display:grid;gap:var(--s4);justify-items:start;padding-block:var(--s6) var(--s7)}
+.enquiry__done .flow-row{margin-top:var(--s2)}
+
+/* With scripting off the submit button has nothing to submit to, so it is
+   replaced by the one route that does work: an email to the atelier. */
+html:not(.js) [data-js-only]{display:none}
+.no-js-only{display:none}
+html:not(.js) .no-js-only{display:inline-flex}
+
+/* -------------------------------------------- PREFERRED CONTACT METHOD --
+   Three real radios in three cards. Each input is stretched over its whole card
+   so the hit target is the card and the global focus ring draws around it.
+   appearance:none rather than opacity:0, because an outline on a transparent
+   element is transparent too. */
+.methods{border:0;margin:0;padding:0;min-width:0;display:grid;gap:var(--s2)}
+.methods legend{
+  padding:0;margin-bottom:var(--s2);
+  font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-45);
+}
+.methods__row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s3)}
+@media (max-width:620px){.methods__row{grid-template-columns:1fr}}
+
+.method{
+  position:relative;display:grid;gap:var(--s1);align-content:start;
+  padding:var(--s4);cursor:pointer;
+  background:var(--paper-card);border:1px solid var(--rule-strong);border-radius:var(--r-sm);
+  transition:border-color var(--d1) var(--e-micro),background-color var(--d1) var(--e-micro);
+}
+.method:hover{border-color:var(--ink-45)}
+.method:has(input:checked){border-color:var(--ink)}
+.method input{
+  position:absolute;inset:0;width:100%;height:100%;margin:0;
+  appearance:none;-webkit-appearance:none;background:none;border:0;
+  border-radius:var(--r-sm);cursor:pointer;
+}
+/* The drawn dial: a --s4 ring with an --s2 pip, which leaves --s1 all round.
+   The top offset centres the ring on a 16px line set at 1.3. */
+.method__name{
+  position:relative;padding-left:var(--s6);
+  font:500 var(--t-base)/1.3 var(--f-sans);color:var(--ink);
+}
+.method__name::before{
+  content:"";position:absolute;left:0;top:calc((1.3em - var(--s4)) / 2);
+  box-sizing:border-box;width:var(--s4);height:var(--s4);
+  border:1px solid var(--rule-strong);border-radius:var(--r-full);background:var(--paper);
+  transition:border-color var(--d1) var(--e-micro);
+}
+.method__name::after{
+  content:"";position:absolute;left:var(--s1);
+  top:calc((1.3em - var(--s4)) / 2 + var(--s1));
+  width:var(--s2);height:var(--s2);border-radius:var(--r-full);background:var(--ink);
+  opacity:0;transform:scale(.4);
+  transition:opacity var(--d1) var(--e-micro),transform var(--d1) var(--e-micro);
+}
+.method input:checked ~ .method__name::before{border-color:var(--ink)}
+.method input:checked ~ .method__name::after{opacity:1;transform:none}
+.method input[aria-invalid=true] ~ .method__name::before{border-color:var(--err)}
+.method__note{padding-left:var(--s6);font:400 var(--t-sm)/1.45 var(--f-sans);color:var(--ink-45)}
+
+/* ---------------------------------------------------------- BAG SUMMARY --
+   Only rendered when aeterna.cart.v1 held something readable. */
+.bag-note{
+  display:grid;gap:var(--s3);margin-bottom:var(--s7);
+  padding:var(--s5) var(--s6);
+  background:var(--paper-card);border:1px solid var(--rule);
+  border-left:var(--s1) solid var(--brass);border-radius:var(--r-sm);
+}
+.bag-note__list{list-style:none;margin:var(--s2) 0 0;padding:0;display:grid;gap:var(--s4)}
+.bag-note__list li{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s1) var(--s4);
+  align-items:baseline;padding-bottom:var(--s4);border-bottom:1px solid var(--rule);
+}
+.bag-note__list li:last-child{padding-bottom:0;border-bottom:0}
+.bag-note__list a{
+  grid-column:1;font:500 var(--t-base)/1.3 var(--f-sans);color:var(--ink);
+  text-decoration:none;text-underline-offset:3px;
+}
+.bag-note__list a:hover{text-decoration:underline}
+.bag-note__meta{grid-column:1;font:400 var(--t-xs)/1.5 var(--f-mono);letter-spacing:.06em;color:var(--ink-45)}
+.bag-note__price{grid-row:1;grid-column:2;font:400 var(--t-sm)/1.4 var(--f-mono);color:var(--ink);white-space:nowrap}
+.bag-note__total{
+  font:400 var(--t-sm)/1.5 var(--f-sans);color:var(--ink);margin:0;
+  padding-top:var(--s4);border-top:1px solid var(--rule);
+}
+
+/* ----------------------------------------------------- WHAT HAPPENS NEXT */
+.order__aside{
+  display:grid;gap:var(--s5);align-content:start;
+  padding:var(--s6);background:var(--paper-sunk);border-radius:var(--r-sm);
+}
+/* The form runs about twice the height of the panel beside it. Pinning the
+   panel keeps the promise in view while you fill the fields, and stops half a
+   screen of empty paper opening up on the right. */
+@media (min-width:881px){
+  .order__aside{position:sticky;top:calc(var(--header-h) + var(--s6))}
+}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:var(--s5)}
+.steps li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s4);align-items:start}
+.steps__n{font:400 var(--t-xs)/1.7 var(--f-mono);letter-spacing:.12em;color:var(--brass)}
+.steps p{font-size:var(--t-sm);line-height:1.6;color:var(--ink-70);margin:0}
+
+/* ------------------------------------------------------------- ATELIER -- */
+.atelier{background:var(--paper-sunk)}
+.atelier .lede{max-width:var(--measure)}
+
+/* A drawn plan rather than a map embed. Four benches at the window, the rooms
+   behind them, every label repeated in the prose alongside. */
+.plan__room{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s2);
+  padding:var(--s5);background:var(--paper-card);
+  border:1px solid var(--rule-strong);border-radius:var(--r-sm);
+}
+.plan__window{
+  grid-column:1/-1;margin:0 0 var(--s2);padding-bottom:var(--s3);
+  /* --s1 as a double rule draws the window wall the way a plan does. */
+  border-bottom:var(--s1) double var(--rule-strong);
+  font:400 var(--t-xs)/1.4 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-45);text-align:center;
+}
+.plan__bench{
+  aspect-ratio:1;display:grid;place-items:center;
+  background:var(--paper);border:1px solid var(--rule-strong);border-radius:var(--r-sm);
+}
+.plan__bench span{font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:.12em;color:var(--brass)}
+.plan__cell{
+  grid-column:span 2;min-height:var(--s7);
+  display:grid;place-items:center;text-align:center;padding:var(--s3);
+  border:1px dashed var(--rule-strong);border-radius:var(--r-sm);
+  font:400 var(--t-xs)/1.5 var(--f-mono);letter-spacing:.06em;color:var(--ink-45);
+}
+.plan__cell--polish,.plan__cell--parts{background:var(--paper-sunk);border-style:solid}
+.plan figcaption{max-width:none}
+/* .dl-spec sets margin:0 later in site.css than .stack-lg sets its gap, so the
+   table under the plan has to ask for its own air. */
+.atelier .stack-lg>.dl-spec{margin-top:var(--s7)}
+@media (max-width:420px){
+  .plan__room{padding:var(--s4);gap:var(--s1)}
+  .plan__cell{grid-column:1/-1}
+}
+
+/* --------------------------------------------------------------- REACH --
+   A night band in the middle of the page. editorial.css already inverts .tile
+   inside .night, so this only has to make the three cards end level. */
+/* The shared auto-fit grid leaves the third tile orphaned in a two-up row at
+   tablet width. Fixed columns here, and the odd one out takes the whole row. */
+.reach .tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:1000px){
+  .reach .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .reach .tile:last-child{grid-column:1/-1}
+}
+@media (max-width:620px){
+  .reach .tiles{grid-template-columns:1fr}
+  .reach .tile:last-child{grid-column:auto}
+}
+.reach .tile{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s3)}
+.reach .tile p{color:var(--night-ink-60)}
+.reach .tile .ref{margin-top:auto;padding-top:var(--s3);font-size:var(--t-xs);line-height:1.4}
+.reach .tile .btn{margin-top:calc(var(--s2) * -1)}   /* close the gap under the ref line */
+
+/* --------------------------------------------------- POLICIES AND FAQ --
+   A hub, not a wall: the heading and the index stay beside the reader while the
+   eight policies scroll. The accordion column lands near 50ch, which is why the
+   panel copy no longer floats in the middle of a 1300px field. */
+.hub{grid-template-columns:minmax(0,.82fr) minmax(0,1fr)}
+.hub__side{display:grid;gap:var(--s7);align-content:start}
+.hub .accordion{min-width:0}
+@media (max-width:880px){
+  .hub{grid-template-columns:1fr}
+  .hub__side{gap:var(--s6);margin-bottom:var(--s2)}
+}
+
+/* A table of contents, not a second set of buttons: hairline rows, the same
+   words as the headings beside them, which is what a contents list is for. */
+.jump{display:grid;gap:0;max-width:36ch}
+.jump>.ref{margin:0 0 var(--s3)}
+.jump a{
+  display:flex;align-items:center;gap:var(--s4);
+  min-height:var(--s7);padding:var(--s2) 0;border-top:1px solid var(--rule);
+  font:400 var(--t-xs)/1.4 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-45);text-decoration:none;
+  transition:color var(--d1) var(--e-micro);
+}
+.jump a:last-of-type{border-bottom:1px solid var(--rule)}
+.jump a:hover{color:var(--brass)}
+.hub__note{display:grid;gap:var(--s2);max-width:38ch}
+
+/* Policy panels carry sub-headings, lists and key names, which editorial.css
+   gives .prose but at lede size. These are the same shapes at body size. */
+.policies .accordion__panel .h4{margin:var(--s6) 0 var(--s3)}
+.policies .accordion__panel .h4:first-child{margin-top:var(--s1)}
+.policies .accordion__panel ul,.faq .accordion__panel ul{
+  margin:0 0 var(--s5);padding-left:var(--s5);display:grid;gap:var(--s3);
+  max-width:var(--measure);color:var(--ink-70);
+}
+.policies .accordion__panel li,.faq .accordion__panel li{padding-left:var(--s2)}
+.policies .accordion__panel a,.faq .accordion__panel a{
+  color:var(--ink);text-underline-offset:3px;text-decoration-thickness:1px;
+}
+.policies code{
+  padding:0 var(--s1);background:var(--paper-sunk);border-radius:var(--r-xs);
+  font:400 var(--t-sm)/1.4 var(--f-mono);color:var(--ink);
+}
+.faq{background:var(--paper-sunk)}
+.faq .pager{margin-top:var(--s9)}
+
+/* With scripting off editorial.css leaves every panel open, so the toggles are
+   not toggles. Take the plus sign away rather than promise something. */
+html:not(.js) .accordion__ic{display:none}
+html:not(.js) .accordion__btn{cursor:default}

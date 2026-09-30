@@ -1,0 +1,370 @@
+/* AETERNA — product detail page. One file serves all twelve references, so
+   nothing here knows a colour, a price or a name: product.js fills the slots.
+   Builds only on tokens from site.css and components from editorial.css.
+
+   Two numbers in this file are asset facts rather than design values, and both
+   are commented where they appear: the plates are 572 x 715 and the zoom file is
+   1144 x 1430. We never display either above its own resolution. */
+
+/* ------------------------------------------------------------- page frame -- */
+
+/* The element the shared header watches. One header tall, so site.js resolves
+   the bar to its solid ivory mode before first paint, and it doubles as the
+   clearance under the fixed header. */
+.pdp__clear{height:var(--header-h)}
+
+.pdp__crumbs{padding-top:var(--s4)}
+.pdp__crumbs .crumbs{margin-bottom:var(--s4)}
+/* 11px of mono type is not a target. Every crumb gets a 24px box for a mouse,
+   and the full 44 (48 - 4) where a finger has to find it. */
+.pdp__crumbs .crumbs a,
+.pdp__crumbs .crumbs [aria-current=page]{
+  display:inline-flex;align-items:center;justify-content:center;min-height:var(--s5);
+}
+@media (pointer:coarse){
+  .pdp__crumbs .crumbs a,
+  .pdp__crumbs .crumbs [aria-current=page]{
+    min-height:calc(var(--s7) - var(--s1));min-width:calc(var(--s7) - var(--s1));
+  }
+}
+
+.pdp__top{
+  display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,1fr);
+  gap:var(--s8) clamp(var(--s7),5vw,var(--s9));
+  align-items:start;padding-bottom:var(--s8);
+}
+@media (max-width:960px){
+  .pdp__top{grid-template-columns:1fr;gap:var(--s7)}
+}
+
+/* ---------------------------------------------------------------- gallery -- */
+.pdp-gal{
+  display:grid;gap:var(--s3);align-items:start;
+  grid-template-columns:minmax(0,1fr) var(--s9);
+  grid-template-areas:"stage rail" "hint hint";
+  /* the plates are 572 x 715: never show one larger than it really is */
+  max-width:572px;
+  position:sticky;top:calc(var(--header-h) + var(--s5));
+}
+.pdp-gal__rail{grid-area:rail;display:grid;gap:var(--s3);align-content:start}
+.pdp-gal__stage{grid-area:stage}
+.pdp-gal__hint{grid-area:hint}
+
+.pdp-gal__thumb{
+  position:relative;display:block;width:100%;aspect-ratio:4/5;
+  padding:0;border:0;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;
+  background:var(--paper-sunk);
+}
+.pdp-gal__thumb img{
+  width:100%;height:100%;object-fit:cover;opacity:.66;
+  transition:opacity var(--d1) var(--e-micro);
+}
+.pdp-gal__thumb:hover img,
+.pdp-gal__thumb[aria-selected=true] img{opacity:1}
+.pdp-gal__thumb[aria-selected=true]::after{
+  content:"";position:absolute;inset:0;border-radius:var(--r-sm);
+  box-shadow:inset 0 0 0 1px var(--ink);
+}
+
+.pdp-gal__stage{
+  position:relative;aspect-ratio:4/5;overflow:hidden;
+  border-radius:var(--r-sm);background:var(--paper-sunk);
+}
+.pdp-gal__frames{position:absolute;inset:0}
+.pdp-gal__frames img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity var(--d2) var(--e-io);
+}
+.pdp-gal__frames img.is-on{opacity:1}
+
+/* Hover lens, fine pointers only. Square, like every other corner on the site.
+   The zoom file is exactly twice the plate, so the lens magnifies 2x and no
+   more: there is no further detail to invent. */
+.pdp-gal__lens{
+  position:absolute;left:0;top:0;width:var(--s11);height:var(--s11);
+  border-radius:var(--r-sm);background-color:var(--paper-sunk);background-repeat:no-repeat;
+  box-shadow:inset 0 0 0 1px var(--rule-strong),var(--lift-2);
+  pointer-events:none;opacity:0;visibility:hidden;
+  transform:translate3d(var(--lx,0),var(--ly,0),0);
+  transition:opacity var(--d1) var(--e-micro),visibility var(--d1);
+}
+.pdp-gal__lens.is-on{opacity:1;visibility:visible}
+@media (pointer:coarse){.pdp-gal__lens{display:none}}
+
+.pdp-gal__open{
+  position:absolute;right:var(--s3);bottom:var(--s3);z-index:2;
+  background:var(--paper-card);
+}
+.pdp-gal__open:hover{background:var(--paper-sunk)}
+
+.pdp-gal__hint{
+  margin:0;padding-top:var(--s3);
+  font:400 var(--t-sm)/1.5 var(--f-sans);color:var(--ink-45);
+}
+.pdp-gal__hint--coarse{display:none}
+@media (pointer:coarse){
+  .pdp-gal__hint--fine{display:none}
+  .pdp-gal__hint--coarse{display:inline}
+}
+
+@media (max-width:960px){
+  .pdp-gal{
+    position:static;grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"stage" "rail" "hint";
+    margin-inline:auto;
+  }
+  .pdp-gal__rail{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
+/* ---------------------------------------------------------------- buy box -- */
+/* The gap is --s5 rather than --s6 for one reason that was measured, not felt:
+   at 1440 x 900 it is what puts the primary action above the fold. */
+.pdp-buy{
+  display:grid;gap:var(--s5);align-content:start;
+  /* a colourway link carries #buy, so the landing point has to clear the bar */
+  scroll-margin-top:calc(var(--header-h) + var(--s5));
+}
+.pdp-buy__id{display:grid;gap:var(--s3)}
+.pdp-buy__id .h1{margin-top:var(--s1)}
+.pdp-buy__id .lede{margin-top:var(--s2)}
+.pdp-buy__money{display:grid;gap:var(--s3)}
+
+.pdp-buy__price{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--s2) var(--s4);margin:0}
+.pdp-buy__amount{font:400 var(--t-h3)/1 var(--f-mono);letter-spacing:.04em;color:var(--ink)}
+.pdp-buy__unit{
+  font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:var(--track-wide);
+  text-transform:uppercase;color:var(--ink-45);
+}
+
+.pdp-buy__avail{
+  display:flex;align-items:center;gap:var(--s3);margin:0;
+  font:500 var(--t-sm)/1.45 var(--f-sans);color:var(--st,var(--ink));
+}
+.pdp-buy__avail[data-state=in]{--st:var(--ok)}
+.pdp-buy__avail[data-state=low]{--st:var(--brass)}
+.pdp-buy__avail[data-state=waitlist]{--st:var(--err)}
+.pdp-buy__dot{
+  flex:none;width:var(--s2);height:var(--s2);
+  border-radius:var(--r-full);background:currentColor;
+}
+
+.pdp-buy__blurb{color:var(--ink-70)}
+
+/* Twelve dials. Real links, in the source, so a crawler and a visitor with no
+   scripting both see all twelve references from any one of them. */
+.pdp-ways{display:grid;gap:var(--s2)}
+.pdp-ways__h{
+  font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:var(--track-wide);
+  text-transform:uppercase;color:var(--ink-45);margin:0;
+}
+/* Equal tracks, and the dot capped rather than the track: left to itself the
+   label is the widest thing in the cell and would decide how big a dial looks. */
+.pdp-ways__grid{
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:var(--s4) var(--s3);padding-top:var(--s1);
+}
+.pdp-ways__item{display:grid;gap:var(--s2);justify-items:center;text-decoration:none}
+.pdp-ways__dot{
+  width:100%;max-width:var(--s8);aspect-ratio:1;border-radius:var(--r-full);
+  background:var(--paper-sunk);box-shadow:inset 0 0 0 1px var(--rule-strong);
+  transition:transform var(--d1) var(--e-micro);
+}
+.pdp-ways__item:hover .pdp-ways__dot{transform:translateY(-2px)}
+.pdp-ways__label{
+  font:400 var(--t-xs)/1.3 var(--f-mono);letter-spacing:.04em;
+  color:var(--ink-45);text-align:center;
+}
+.pdp-ways__item:hover .pdp-ways__label{color:var(--ink)}
+.pdp-ways__item[aria-current=page] .pdp-ways__dot{
+  box-shadow:inset 0 0 0 1px var(--rule-strong),0 0 0 1px var(--paper),0 0 0 2px var(--ink);
+}
+.pdp-ways__item[aria-current=page] .pdp-ways__label{color:var(--ink)}
+/* Six columns at 375 leave each cell 45.8 wide, which clears the 44px coarse
+   floor. Below 400 the grid drops to four so the cells grow again. */
+@media (max-width:400px){
+  .pdp-ways__grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
+.pdp-buy__actions{display:grid;gap:var(--s3)}
+.pdp-buy__note{margin:0;font:400 var(--t-sm)/1.5 var(--f-sans);color:var(--ink-45)}
+
+/* Quiet third action. Its visible text is set from the aria-label site.js
+   writes, so the accessible name and the label on screen can never disagree. */
+.pdp-wish{
+  display:inline-flex;align-items:center;gap:var(--s3);
+  min-height:var(--s7);padding:0;margin:0;border:0;background:none;cursor:pointer;
+  font:400 var(--t-sm)/1.45 var(--f-sans);color:var(--ink-70);text-align:left;
+  transition:color var(--d1) var(--e-micro);
+}
+.pdp-wish:hover{color:var(--ink)}
+.pdp-wish span{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--rule-strong)}
+.pdp-wish:hover span{text-decoration-color:currentColor}
+.pdp-wish svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.pdp-wish[aria-pressed=true]{color:var(--ink)}
+.pdp-wish[aria-pressed=true] svg{fill:var(--brass);stroke:var(--brass)}
+
+.pdp-buy__reassure{
+  list-style:none;margin:0;padding:var(--s5) 0 0;display:grid;gap:var(--s3);
+  border-top:1px solid var(--rule);
+}
+.pdp-buy__reassure li{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s3);align-items:start;
+  font:400 var(--t-sm)/1.5 var(--f-sans);color:var(--ink-45);
+}
+.pdp-buy__reassure svg{
+  flex:none;width:18px;height:18px;fill:none;stroke:var(--brass);
+  stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;
+  /* half a step, so an 18px glyph sits on the first line rather than above it */
+  margin-top:calc(var(--s1) / 2);
+}
+
+/* ------------------------------------------------------------------ story -- */
+.pdp-story{background:var(--paper-sunk)}
+.pdp-story__grid{align-items:center}
+.pdp-story__h{margin-top:var(--s4);max-width:18ch}
+.pdp-story__prose{margin-top:var(--s5)}
+/* editorial.css sets .prose p{margin:0} after .prose>*+*{margin-top:--s5}, so
+   the later, more specific rule wins and consecutive paragraphs touch. Restored
+   here at page scope rather than by editing the shared file. */
+.pdp-story__prose p + p{margin-top:var(--s5)}
+/* the plates are 572 x 715 */
+.pdp-story__fig{max-width:572px;margin-inline:auto}
+.pdp-story__fig figcaption{max-width:none}
+
+/* ------------------------------------------------- specs and ownership -- */
+.pdp-detail__grid{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:var(--s9) clamp(var(--s7),5vw,var(--s9));align-items:start;
+}
+.pdp-detail__h{margin-top:var(--s3)}
+.pdp-detail .dl-spec,
+.pdp-detail .accordion{margin-top:var(--s5)}
+.pdp-detail__foot{margin-top:var(--s5);max-width:var(--measure)}
+@media (max-width:880px){
+  .pdp-detail__grid{grid-template-columns:1fr}
+}
+
+/* ---------------------------------------------------------------- reviews -- */
+.pdp-reviews{background:var(--paper-sunk)}
+.pdp-reviews__head{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.82fr);
+  gap:var(--s7) clamp(var(--s7),5vw,var(--s9));align-items:end;margin-bottom:var(--s8);
+}
+.pdp-reviews__summary{
+  display:flex;flex-wrap:wrap;align-items:center;gap:var(--s3) var(--s5);margin-top:var(--s5);
+}
+.pdp-reviews__score{font:400 var(--t-h3)/1 var(--f-display);color:var(--ink)}
+@media (max-width:880px){
+  .pdp-reviews__head{grid-template-columns:1fr;gap:var(--s7)}
+}
+
+.pdp-stars{
+  /* 16px is the small-mark icon size the rest of the system uses */
+  --star:var(--s4);
+  position:relative;display:inline-block;flex:none;
+  width:calc(5 * var(--star) + 4 * var(--s1));height:var(--star);
+}
+.pdp-stars__row{position:absolute;top:0;left:0;display:flex;gap:var(--s1)}
+.pdp-stars__row svg{flex:none;width:var(--star);height:var(--star);stroke:none}
+.pdp-stars__base svg{fill:var(--ink-25)}
+.pdp-stars__fill{overflow:hidden;width:calc(var(--pct,0) * 1%)}
+.pdp-stars__fill svg{fill:var(--brass)}
+
+.pdp-dist{list-style:none;margin:0;padding:0;display:grid;gap:var(--s2)}
+.pdp-dist li{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--s4);align-items:center;
+  font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:.08em;color:var(--ink-45);
+}
+.pdp-dist__k{white-space:nowrap}
+.pdp-dist__bar{
+  height:var(--s2);background:var(--paper-card);
+  border:1px solid var(--rule);border-radius:var(--r-full);overflow:hidden;
+}
+.pdp-dist__bar i{display:block;height:100%;width:var(--w,0);background:var(--brass)}
+.pdp-dist__n{text-align:right;min-width:var(--s5)}
+
+.pdp-reviews__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s6)}
+/* stars, quote, then the owner line pinned to the foot, so three cards of
+   different lengths still line up along the bottom */
+.pdp-review{
+  display:grid;grid-template-rows:auto 1fr auto;gap:var(--s4);margin:0;padding:var(--s6);
+  background:var(--paper-card);border:1px solid var(--rule);border-radius:var(--r-sm);
+}
+.pdp-review blockquote{
+  margin:0;font:400 var(--t-h4)/1.5 var(--f-sans);letter-spacing:-.006em;color:var(--ink);
+}
+.pdp-review figcaption{display:grid;gap:var(--s1)}
+.pdp-review__who{font:500 var(--t-sm)/1.3 var(--f-sans);color:var(--ink)}
+.pdp-review__what{font:400 var(--t-xs)/1.5 var(--f-mono);letter-spacing:.08em;color:var(--ink-45)}
+.pdp-reviews__note{margin-top:var(--s7);max-width:var(--measure)}
+@media (max-width:900px){
+  .pdp-reviews__grid{grid-template-columns:1fr}
+}
+
+/* ---------------------------------------------------------------- related -- */
+.pdp-related__head{
+  display:flex;flex-wrap:wrap;gap:var(--s5);
+  align-items:flex-end;justify-content:space-between;margin-bottom:var(--s8);
+}
+.pdp-related__head .sec-head{gap:var(--s3)}
+.pdp-related .grid-products{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:860px){
+  .pdp-related .grid-products{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* ------------------------------------------------------------------- zoom -- */
+.zoomer{
+  position:fixed;inset:0;z-index:calc(var(--z-drawer) + 1);
+  display:grid;grid-template-rows:auto minmax(0,1fr);
+  opacity:0;visibility:hidden;
+  transition:opacity var(--d2) var(--e-io),visibility var(--d2);
+}
+.zoomer.is-open{opacity:1;visibility:visible}
+.zoomer__bar{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s5);
+  padding:var(--s3) var(--gutter);border-bottom:1px solid var(--night-rule);
+  color:var(--night-ink);
+}
+.zoomer__meta{display:grid;gap:var(--s1);min-width:0}
+/* the close button sits in a flex bar, so it has to refuse to be squeezed, and
+   it carries the full 44px coarse-pointer target (48 - 4) */
+.zoomer__bar .icon-btn{
+  flex:none;width:calc(var(--s7) - var(--s1));height:calc(var(--s7) - var(--s1));
+}
+.zoomer__title{margin:0;font:500 var(--t-sm)/1.35 var(--f-sans);color:var(--night-ink)}
+.zoomer__stage{overflow:auto;padding:var(--s5)}
+.zoomer__stage:focus-visible{outline:2px solid var(--night-ink);outline-offset:calc(var(--s1) * -1)}
+/* the zoom file is 1144 x 1430: this is its native size, and its limit */
+.zoomer__stage img{display:block;width:1144px;max-width:none;height:auto;margin-inline:auto;background:var(--night-2)}
+
+/* ------------------------------------------------------ no javascript -- */
+/* Keyed on .no-js rather than :not(.js) on purpose. The boot script in the page
+   head strips the class again if site.js never arrives; if this rule matched
+   that state it would hide the article while <noscript> stayed unrendered, and
+   the visitor would get a blank page. product.js handles that case instead. */
+html.no-js .pdp{display:none}
+
+.pdp-ns__lede{max-width:74ch;margin-top:var(--s5)}
+.pdp-ns__list{
+  list-style:none;margin:var(--s8) 0 0;padding:0;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 clamp(var(--s7),5vw,var(--s9));border-top:1px solid var(--rule);
+}
+.pdp-ns__list li{display:grid;gap:var(--s1);padding:var(--s3) 0;border-bottom:1px solid var(--rule)}
+.pdp-ns__list a{
+  display:inline-flex;align-items:center;min-height:calc(var(--s7) - var(--s1));
+  font:500 var(--t-h4)/1.3 var(--f-sans);color:var(--ink);text-decoration:none;
+  transition:color var(--d1) var(--e-micro);
+}
+.pdp-ns__list a:hover{color:var(--brass)}
+.pdp-ns__list span{font:400 var(--t-xs)/1.5 var(--f-mono);letter-spacing:.08em;color:var(--ink-45)}
+.pdp-ns__row{margin-top:var(--s8);margin-bottom:var(--s5)}
+@media (max-width:760px){
+  .pdp-ns__list{grid-template-columns:1fr}
+}
+
+/* ---------------------------------------------------------- error state -- */
+.pdp-error{padding-block:var(--s9) var(--sec)}
+.pdp-error .state{padding-block:0}
+.pdp-error .state .flow-row{justify-content:center}
+.pdp-error__h{margin-top:var(--s3)}

@@ -1,0 +1,133 @@
+/* AETERNA — the house. Page-scoped compositions for about.html only.
+   Every shared shape is taken from site.css and editorial.css: .page-head,
+   .prose, .split-2, .dl-spec, .stats, .sec-head, .figure-wide. What is here is
+   what this page needs and no other page does, plus three small repairs to
+   shared components that are noted for editorial.css. */
+
+/* --------------------------------------------------------------- OPENER --
+   The night page head splits: statement bottom-left, one plate right.
+   .page-head--split is the system's two-column head and carries .wrap-wide on
+   the same element, so the section keeps its full-bleed night ground. */
+.house-open__copy{display:grid;gap:0;align-content:end}
+.house-open__plate{margin:0}
+.house-open__plate img{
+  width:100%;aspect-ratio:4/5;object-fit:cover;object-position:50% 46%;
+  border-radius:var(--r-sm);background:var(--night-2);
+}
+/* On a wide screen the plate shares the first screen with the statement, so it
+   is squared off rather than running a third of a screen past the fold. */
+@media (min-width:861px){
+  .house-open__plate img{aspect-ratio:1}
+}
+
+/* ---------------------------------------------------------------- STORY --
+   Sticky heading column, prose second. The wide plate closes the section. */
+.house-story__aside{align-content:start}
+.house-figure{margin-top:var(--sec)}
+.house-figure img{aspect-ratio:16/9;object-fit:cover}
+
+/* -------------------------------------------------------------- LEDGER --
+   A list, not a zig-zag: a mono year in the left column, a hairline between
+   every entry, nothing decorative. */
+.timeline{list-style:none;margin:0;padding:0;border-top:1px solid var(--night-rule)}
+.timeline>li{
+  display:grid;grid-template-columns:minmax(0,.16fr) minmax(0,1fr);
+  gap:var(--s3) var(--s7);
+  padding-block:var(--s6);
+  border-bottom:1px solid var(--night-rule);
+}
+.timeline .ref{font-size:var(--t-sm);color:var(--brass-lite)}
+.timeline__body{display:grid;gap:var(--s3);align-content:start}
+.timeline__body p{margin:0;max-width:var(--measure);color:var(--night-ink-60)}
+@media (max-width:660px){
+  .timeline>li{grid-template-columns:1fr;gap:var(--s3)}
+}
+
+/* -------------------------------------------------------------- BENCHES --
+   Four profiles. The plate above each name is the part that person owns:
+   a photograph of a component, never a face. */
+.makers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s7) var(--s6)}
+.maker{display:grid;gap:var(--s5);align-content:start}
+.maker__plate{margin:0;overflow:hidden;border-radius:var(--r-sm);background:var(--paper-sunk)}
+.maker__plate img{width:100%;aspect-ratio:4/5;object-fit:cover;object-position:50% 52%}
+.maker__body{display:grid;gap:var(--s2)}
+.maker__body p:last-child{font-size:var(--t-sm);color:var(--ink-45);margin:var(--s2) 0 0}
+@media (max-width:1000px){.makers{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){
+  .makers{grid-template-columns:1fr;gap:var(--s7)}
+  .maker__plate img{aspect-ratio:4/3;object-position:50% 54%}
+}
+
+/* ------------------------------------------------------------- REGISTER --
+   The footer links straight here, so the anchor has to clear the fixed header. */
+.house-reg{background:var(--paper-sunk)}
+.house-reg[id]{scroll-margin-top:calc(var(--header-h) + var(--s5))}
+.house-reg__ledger{margin-top:var(--s9)}
+
+/* Five columns will not fit a 320px screen at a legible size, so the table
+   keeps a floor width and scrolls inside its own labelled region rather than
+   pushing the page sideways. The floor is the narrow wrap less the two largest
+   space steps: the narrowest these five columns stay comfortable. */
+.reg-scroll{overflow-x:auto;overscroll-behavior-x:contain}
+.reg-table{
+  width:100%;min-width:calc(var(--wrap-narrow) - var(--s11) - var(--s8));
+  border-collapse:collapse;text-align:left;
+}
+/* The caption must stay readable and in view while the rows scroll under it,
+   so it is pinned to the left edge and capped at the measure or the screen,
+   whichever is smaller. */
+.reg-table caption{
+  position:sticky;left:0;
+  width:min(var(--measure),calc(100vw - 2*var(--gutter) - var(--s5)));
+  text-align:left;margin-bottom:var(--s5);
+  font:400 var(--t-sm)/1.5 var(--f-sans);color:var(--ink-45);
+}
+.reg-table th,.reg-table td{
+  padding:var(--s4) var(--s5) var(--s4) 0;
+  border-bottom:1px solid var(--rule);vertical-align:baseline;
+}
+.reg-table th:last-child,.reg-table td:last-child{padding-right:0}
+.reg-table thead th{
+  font:400 var(--t-xs)/1.4 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-45);border-bottom-color:var(--rule-strong);white-space:nowrap;
+}
+.reg-table tbody th{
+  font:400 var(--t-sm)/1.4 var(--f-mono);letter-spacing:.06em;color:var(--ink);white-space:nowrap;
+}
+.reg-table td{font-size:var(--t-sm);color:var(--ink-70)}
+.reg-table tbody tr:last-child th,.reg-table tbody tr:last-child td{border-bottom:0}
+@media (max-width:640px){
+  .reg-table th,.reg-table td{padding-right:var(--s4)}
+  /* Below this width the five columns overflow. A short fade at the right edge
+     says so without a sentence that would be wrong on a wide screen. The mask
+     gradient is an alpha ramp, not a colour. */
+  .reg-scroll{mask-image:linear-gradient(90deg,#000 calc(100% - var(--s7)),transparent)}
+}
+
+/* ------------------------------------------------------------ MATERIALS --
+   The spec list sits level with the heading rather than with the first line
+   of prose, which is where the shared .dl-spec top rule would otherwise land. */
+.house-mat__list{align-self:start}
+@media (min-width:881px){.house-mat__list{margin-top:var(--s2)}}
+
+/* ----------------------------------------- repairs to shared components --
+   Each of these belongs in editorial.css. They are scoped to this page here
+   because no agent may edit a shared file; see needsFromShared in the report. */
+
+/* editorial.css declares .prose>*+*{margin-top:var(--s5)} and then
+   .prose p{margin:0}, which is more specific and wins, so consecutive
+   paragraphs in any .prose collapse into one block of text. */
+.prose>p+p{margin-top:var(--s5)}
+.prose>:is(h2,h3)+p{margin-top:var(--s4)}
+
+/* .stats dt is set at line-height 1. That is right for a one-line label and
+   collides with itself the moment a label wraps, which it does at 375px. */
+.stats dt{line-height:1.5}
+
+/* A breadcrumb link is a 32x11 tap target. Under a coarse pointer it grows to
+   the 44px minimum; the text stays on the gutter because the box is only
+   padded, never centred. */
+@media (pointer:coarse){
+  .crumbs{margin-bottom:var(--s3)}
+  .crumbs a{display:inline-flex;align-items:center;min-height:44px;min-width:44px}
+}

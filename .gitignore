@@ -1,0 +1,13 @@
+# OS and editor droppings -- the site itself has no build output to ignore.
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+.AppleDouble
+*.swp
+*~
+.vscode/
+.idea/
+
+# Design-hook cache from the authoring project, not part of the site.
+.impeccable/

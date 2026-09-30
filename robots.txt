@@ -1,0 +1,7 @@
+# Aeterna — demonstration site
+User-agent: *
+Allow: /
+# The filmstrip is an embedded component, not a page anyone should land on.
+Disallow: /assets/collection-filmstrip.html
+
+Sitemap: https://example.com/sitemap.xml

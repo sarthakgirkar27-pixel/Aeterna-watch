@@ -1,0 +1,1253 @@
+/* ============================================================================
+   AETERNA — design system
+   One file, three layers: tokens, primitives, components.
+   Ground rules that hold everywhere:
+     · Paper is the default ground. Night is used only for film chapters.
+     · One section padding token. One type scale. One motion scale.
+     · Corners are soft: --r-sm on every rectangle, --r-xs where an element is
+       too small to carry it. Shadows are rare. No glows, no glass, no gradients
+       on text. The watches are the only spectacle.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------- 1. TOKENS */
+:root{
+  /* Ground — warm catalogue stock, never pure white */
+  --paper:#f5f2ec;
+  --paper-sunk:#ebe6dc;
+  --paper-card:#fffdf9;
+
+  /* Ink — warm near-black, never pure black */
+  --ink:#1a1917;
+  --ink-70:#4a4741;          /* body copy            8.3:1 on paper */
+  --ink-45:#67625a;          /* meta, captions. Darkened so it also clears 4.5:1 on --paper-sunk (4.86:1) */
+  --ink-25:#a19b91;          /* decorative only, never body text */
+  --rule:rgba(26,25,23,.13);
+  --rule-strong:rgba(26,25,23,.28);
+
+  /* Night — the film chapters */
+  --night:#121013;
+  --night-2:#1b181c;
+  --night-ink:#f2ede5;       /* 16.2:1 on night */
+  --night-ink-60:rgba(242,237,229,.62);   /* 6.7:1 */
+  --night-rule:rgba(242,237,229,.17);
+  --night-rule-strong:rgba(242,237,229,.34);
+
+  /* Material accent — the gold of the cases. Rare. Never a glow. */
+  --brass:#835d3e;           /* on paper 5.22:1, on --paper-sunk 4.69:1, on --paper-card 5.74:1 */
+  --brass-lite:#c9987a;      /* on night   7.5:1 */
+
+  /* Semantic */
+  --ok:#2c6047;
+  --err:#8c2f1c;
+
+  /* Type */
+  --f-display:"Bodoni Moda","Bodoni 72",Didot,"Times New Roman",serif;
+  --f-sans:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --f-mono:"Aeterna Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+
+  /* rem, so a visitor who raises their browser's default text size is obeyed.
+     px sizes ignore that setting entirely (WCAG 1.4.4). The vw term in each
+     clamp does not scale with text size, which is why the floor is the rem. */
+  --t-xs:0.6875rem;
+  --t-sm:0.8125rem;
+  --t-base:1rem;
+  --t-lede:clamp(1.0625rem,1.05vw,1.1875rem);
+  --t-h4:clamp(1.0625rem,1.15vw,1.25rem);
+  --t-h3:clamp(1.3125rem,1.75vw,1.75rem);
+  --t-h2:clamp(1.8125rem,3.4vw,3.125rem);
+  --t-h1:clamp(2.375rem,5vw,4.75rem);
+  --t-display:clamp(2.875rem,7.4vw,7.375rem);
+
+  --lh-tight:1.06;
+  --lh-snug:1.24;
+  --lh-body:1.62;
+  --track-wide:.18em;         /* eyebrows */
+  --track-display:-.015em;
+
+  /* Space — 8px base */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px;
+  --s6:32px; --s7:48px; --s8:64px; --s9:96px; --s10:128px; --s11:176px;
+  --sec:clamp(72px,8.5vw,136px);        /* the one section padding */
+  --sec-lg:clamp(104px,12vw,196px);     /* chapter breaks only */
+  --gutter:clamp(20px,5vw,72px);
+  --wrap:1280px;
+  --wrap-wide:1560px;
+  --wrap-narrow:720px;
+  --measure:50ch;   /* ~65 rendered characters: the ch unit over-delivers ~30% in this face */
+  --header-h:76px;
+
+  /* Corners */
+  /* The workhorse. Everything rectangular on the site answers to this one:
+     cards, media, panels, drawers, fields, buttons, chips. Small or thin
+     elements that would go lozenge-shaped at this size step down to --r-xs. */
+  --r-sm:10px;
+  --r-xs:4px;                 /* thin bars, small icons, inline code */
+  --r-md:14px;                /* the largest surfaces */
+  --r-full:999px;             /* dots and count badges only */
+
+  /* Motion */
+  --d1:160ms;                 /* micro: hover, focus */
+  --d2:300ms;                 /* state change */
+  --d3:620ms;                 /* entrance */
+  --d4:1100ms;                /* cinematic */
+  --e-out:cubic-bezier(.16,1,.3,1);
+  --e-io:cubic-bezier(.62,0,.24,1);
+  --e-micro:cubic-bezier(.3,.7,.4,1);
+
+  /* Lift — two values, both restrained */
+  --lift-1:0 1px 2px rgba(26,25,23,.05),0 8px 24px -14px rgba(26,25,23,.20);
+  --lift-2:0 2px 6px rgba(26,25,23,.07),0 24px 56px -24px rgba(26,25,23,.32);
+
+  --z-header:80;
+  --z-drawer:90;
+  --z-overlay:100;
+}
+
+@font-face{
+  font-family:"Aeterna Mono";
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+  src:url("fonts/fragment-mono.woff2") format("woff2");
+}
+
+/* ------------------------------------------------------- 2. RESET AND BASE */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+html,body{overflow-x:hidden;overflow-x:clip}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink-70);
+  font:400 var(--t-base)/var(--lh-body) var(--f-sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+img,svg,video{display:block;max-width:100%}
+img{height:auto}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+::selection{background:var(--ink);color:var(--paper)}
+
+/* While an overlay owns the screen the page behind it is pinned, not scrolled.
+   top is set inline to the frozen scrollY so nothing jumps. */
+body.is-locked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
+
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:1px}
+:is(.night,.on-dark) :focus-visible,.site-header[data-mode=over] :focus-visible{outline-color:var(--night-ink)}
+
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+.skip{position:fixed;top:-100px;left:var(--s4);z-index:var(--z-overlay);padding:var(--s3) var(--s5);background:var(--ink);color:var(--paper);text-decoration:none;font:500 var(--t-sm)/1 var(--f-sans);letter-spacing:.04em;transition:top var(--d2) var(--e-out)}
+.skip:focus{top:var(--s4)}
+main:focus{outline:none}
+
+/* --------------------------------------------------- 3. TYPE PRIMITIVES */
+.display,.h1,.h2,.h3{
+  font-family:var(--f-display);
+  font-weight:400;
+  color:var(--ink);
+  letter-spacing:var(--track-display);
+  margin:0;
+  text-wrap:balance;
+}
+.display{font-size:var(--t-display);line-height:var(--lh-tight)}
+.h1{font-size:var(--t-h1);line-height:var(--lh-tight)}
+.h2{font-size:var(--t-h2);line-height:1.1}
+.h3{font-size:var(--t-h3);line-height:var(--lh-snug)}
+.h4{
+  font:500 var(--t-h4)/var(--lh-snug) var(--f-sans);
+  letter-spacing:-.008em;color:var(--ink);margin:0;
+}
+
+.eyebrow{
+  display:block;margin:0;
+  font:400 var(--t-xs)/1 var(--f-mono);
+  letter-spacing:var(--track-wide);
+  text-transform:uppercase;
+  color:var(--brass);
+}
+.lede{
+  font-size:var(--t-lede);line-height:1.58;color:var(--ink-70);
+  max-width:var(--measure);margin:0;
+}
+.body{margin:0;max-width:var(--measure)}
+.meta{font:400 var(--t-sm)/1.5 var(--f-sans);color:var(--ink-45);margin:0}
+.ref{font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-45)}
+p{margin:0 0 var(--s4)}
+p:last-child{margin-bottom:0}
+.stack>*+*{margin-top:var(--s4)}
+.stack-lg>*+*{margin-top:var(--s6)}
+
+/* Night inversions — one block, so a dark section needs only .night */
+.night{background:var(--night);color:var(--night-ink-60)}
+:is(.night,.on-dark) .display,:is(.night,.on-dark) .h1,:is(.night,.on-dark) .h2,:is(.night,.on-dark) .h3,:is(.night,.on-dark) .h4{color:var(--night-ink)}
+:is(.night,.on-dark) .eyebrow{color:var(--brass-lite)}
+.night .lede,.night .body{color:var(--night-ink-60)}
+.night .meta,.night .ref{color:var(--night-ink-60)}
+.night .rule,.night hr{border-color:var(--night-rule)}
+
+/* ------------------------------------------------------------- 4. LAYOUT */
+.wrap{width:min(var(--wrap),100% - 2*var(--gutter));margin-inline:auto}
+.wrap-wide{width:min(var(--wrap-wide),100% - 2*var(--gutter));margin-inline:auto}
+.wrap-narrow{width:min(var(--wrap-narrow),100% - 2*var(--gutter));margin-inline:auto}
+.sec{padding-block:var(--sec);position:relative}
+.sec-lg{padding-block:var(--sec-lg);position:relative}
+.sec-tight{padding-block:calc(var(--sec) * .62);position:relative}
+hr,.rule{border:0;border-top:1px solid var(--rule);margin:0}
+
+/* Section head — one shape, used by every section so the page has a spine */
+.sec-head{display:grid;gap:var(--s4);max-width:var(--measure)}
+.sec-head--center{margin-inline:auto;justify-items:center;text-align:center}
+.sec-head--split{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);
+  gap:var(--s5) var(--s9);align-items:end;max-width:none;
+}
+.sec-head--split .lede{margin-bottom:var(--s1)}
+@media (max-width:860px){.sec-head--split{grid-template-columns:1fr;align-items:start}}
+
+/* ------------------------------------------------------------ 5. BUTTONS */
+.btn{
+  --btn-h:52px;
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--s3);
+  min-height:var(--btn-h);padding:0 var(--s6);
+  font:500 var(--t-sm)/1 var(--f-sans);
+  letter-spacing:.09em;text-transform:uppercase;
+  text-decoration:none;white-space:nowrap;
+  border:1px solid transparent;border-radius:var(--r-sm);
+  cursor:pointer;
+  transition:background-color var(--d1) var(--e-micro),color var(--d1) var(--e-micro),
+             border-color var(--d1) var(--e-micro),transform var(--d1) var(--e-micro);
+}
+.btn:active{transform:translateY(1px)}
+.btn[disabled],.btn[aria-disabled=true]{opacity:.42;pointer-events:none}
+.btn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+
+.btn--primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn--primary:hover{background:#000;border-color:#000}
+.btn--secondary{background:transparent;color:var(--ink);border-color:var(--rule-strong)}
+.btn--secondary:hover{border-color:var(--ink);background:rgba(26,25,23,.04)}
+.btn--ghost{
+  min-height:auto;padding:0 0 var(--s1);border:0;border-radius:0;
+  background:none;color:var(--ink);position:relative;
+}
+.btn--ghost::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:currentColor;
+  transform:scaleX(1);transform-origin:right;transition:transform var(--d2) var(--e-out);
+}
+.btn--ghost:hover::after{transform:scaleX(0)}
+.btn--block{width:100%}
+.btn--sm{--btn-h:40px;padding:0 var(--s5);font-size:var(--t-xs)}
+
+:is(.night,.on-dark) .btn--primary{background:var(--night-ink);color:var(--night);border-color:var(--night-ink)}
+:is(.night,.on-dark) .btn--primary:hover{background:#fff;border-color:#fff}
+:is(.night,.on-dark) .btn--secondary{color:var(--night-ink);border-color:var(--night-rule-strong)}
+:is(.night,.on-dark) .btn--secondary:hover{border-color:var(--night-ink);background:rgba(242,237,229,.07)}
+:is(.night,.on-dark) .btn--ghost{color:var(--night-ink)}
+
+@media (pointer:coarse){.btn{--btn-h:48px}.btn--sm{--btn-h:44px}}
+
+/* ------------------------------------------------------- 5b. SELECT MENU --
+   A listbox that stands in for a native <select>. The OS dropdown cannot be
+   styled or animated and arrives in the platform's blue, which on this site
+   reads as somebody else's control dropped into the page. The <select> itself
+   stays in the document and stays the source of truth. */
+/* min-width:0 on both, or the grid item refuses to shrink below the longest
+   option's intrinsic width and the field runs off a 320px screen. */
+.selectmenu{position:relative;display:grid;min-width:0}
+
+.selectmenu__btn{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s4);
+  width:100%;min-width:0;text-align:left;cursor:pointer;
+}
+.selectmenu__btn svg{
+  width:15px;height:15px;flex:none;
+  fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform var(--d2) var(--e-out);
+}
+.selectmenu__btn[aria-expanded=true] svg{transform:rotate(180deg)}
+.selectmenu__value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* the form-field trigger: reads exactly like .field select did */
+.selectmenu__btn--field{
+  min-height:50px;padding:var(--s3) var(--s4);
+  background:var(--paper-card);color:var(--ink);
+  border:1px solid var(--rule-strong);border-radius:var(--r-sm);
+  font-size:var(--t-base);font-family:inherit;
+  transition:border-color var(--d1) var(--e-micro),background-color var(--d1) var(--e-micro);
+}
+.selectmenu__btn--field:hover{border-color:var(--ink-45)}
+.selectmenu__btn--field[aria-invalid=true]{border-color:var(--err)}
+.selectmenu__btn--field .selectmenu__value:empty::before{content:attr(data-placeholder);color:var(--ink-45)}
+
+.selectmenu__list{
+  position:absolute;top:calc(100% + var(--s2));left:0;right:0;
+  z-index:5;
+  min-width:100%;max-height:min(336px,52vh);
+  overflow-y:auto;overscroll-behavior:contain;
+  display:grid;gap:2px;align-content:start;
+  margin:0;padding:var(--s2);list-style:none;
+  background:var(--paper-card);
+  border:1px solid var(--rule-strong);border-radius:var(--r-sm);
+  box-shadow:var(--lift-2);
+  /* it arrives rather than appears */
+  opacity:0;visibility:hidden;
+  transform:translateY(-6px) scale(.985);
+  transform-origin:top center;
+  transition:opacity var(--d2) var(--e-out),transform var(--d2) var(--e-out),
+             visibility var(--d2);
+}
+.selectmenu.is-open .selectmenu__list{opacity:1;visibility:visible;transform:none}
+
+/* a listbox may hold groups, and a group holds its own options */
+.selectmenu__group{display:grid;gap:2px;margin:0;padding:0}
+.selectmenu__group+.selectmenu__group{margin-top:var(--s3)}
+.selectmenu__grouplabel{
+  padding:var(--s3) var(--s4) var(--s2);
+  font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:var(--track-wide);
+  text-transform:uppercase;color:var(--ink-45);
+}
+
+.selectmenu__opt{
+  display:flex;align-items:center;gap:var(--s3);
+  min-height:40px;padding:0 var(--s4);
+  border-radius:var(--r-xs);
+  font:400 var(--t-sm)/1.25 var(--f-sans);color:var(--ink-70);
+  cursor:pointer;
+  transition:background-color var(--d1) var(--e-micro),color var(--d1) var(--e-micro);
+}
+.selectmenu__opt::before{
+  content:"";flex:none;width:var(--s2);height:var(--s2);
+  border-radius:var(--r-full);background:transparent;
+}
+.selectmenu__opt:hover{background:var(--paper-sunk);color:var(--ink)}
+.selectmenu__opt:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.selectmenu__opt[aria-selected=true]{color:var(--ink)}
+.selectmenu__opt[aria-selected=true]::before{background:var(--brass)}
+
+@media (pointer:coarse){.selectmenu__opt{min-height:44px}}
+
+/* -------------------------------------------------------------- 6. FORMS */
+.field{display:grid;gap:var(--s2)}
+.field>label{font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-45)}
+.field input,.field select,.field textarea{
+  width:100%;min-height:50px;padding:var(--s3) var(--s4);
+  background:var(--paper-card);color:var(--ink);
+  border:1px solid var(--rule-strong);border-radius:var(--r-sm);
+  font-size:var(--t-base);
+  transition:border-color var(--d1) var(--e-micro),background-color var(--d1) var(--e-micro);
+}
+.field textarea{min-height:128px;resize:vertical;line-height:1.5}
+.field input::placeholder,.field textarea::placeholder{color:var(--ink-45);opacity:1}
+.field input:hover,.field select:hover,.field textarea:hover{border-color:var(--ink-45)}
+.field input:focus-visible,.field select:focus-visible,.field textarea:focus-visible{border-color:var(--ink)}
+.field [aria-invalid=true]{border-color:var(--err)}
+.field-msg{font:400 var(--t-sm)/1.4 var(--f-sans);color:var(--err);margin:0;min-height:1.4em}
+.field-hint{font:400 var(--t-sm)/1.4 var(--f-sans);color:var(--ink-45);margin:0}
+.field select{
+  appearance:none;-webkit-appearance:none;padding-right:var(--s8);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6.5 8 10.5 12 6.5' fill='none' stroke='%236e6960' stroke-width='1.3'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right var(--s4) center;background-size:15px;
+}
+.night .field>label{color:var(--night-ink-60)}
+.night .field input,.night .field select,.night .field textarea{
+  background:rgba(242,237,229,.05);color:var(--night-ink);border-color:var(--night-rule-strong);
+}
+.night .field input::placeholder{color:var(--night-ink-60)}
+
+/* ------------------------------------------------- 7. PRODUCT CARD SYSTEM */
+.grid-products{
+  display:grid;gap:var(--s7) var(--s5);
+  grid-template-columns:repeat(auto-fill,minmax(258px,1fr));
+}
+.grid-products--4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:1080px){.grid-products--4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){
+  .grid-products,.grid-products--4{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s6) var(--s4)}
+}
+
+.pcard{position:relative;display:flex;flex-direction:column;isolation:isolate}
+.pcard__media{
+  position:relative;display:block;aspect-ratio:4/5;overflow:hidden;
+  background:var(--paper-sunk);border-radius:var(--r-sm);
+}
+.pcard__media img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+}
+
+/* -- THE GATE -----------------------------------------------------------
+   The swap used to be a cross-fade plus a 1.1s scale(1.035). Two things were
+   wrong with it. A dissolve has no direction, so nothing happened -- one
+   picture simply became another. And --d4 with --e-out is a curve with an
+   enormous tail: at 620ms the scale is still creeping, at 1100ms it has not
+   visibly stopped. Motion that never arrives reads as cheap no matter how
+   slow it is.
+
+   What replaces it is a projector gate. The second photograph is lowered into
+   the frame behind a travelling edge: the clip line sweeps top to bottom, a
+   1px brass hairline rides on it, and the picture seats with a short drop and
+   a focus-pull. It has a direction (down, with gravity), a mechanism (the
+   edge) and a hard stop.
+
+   Three things move, all on --d3/--e-io, all locked to each other because the
+   parts of a mechanism are rigid:
+     · the clip line          0 -> 100% of the frame
+     · the incoming picture   -2.4% and 1.03  ->  0 and 1.00   (drop + focus)
+     · the outgoing picture   0  ->  +3.5%                     (pressed out)
+   The outgoing travels 1.46x further than the incoming, which is the parallax
+   that gives the two frames depth. Every value lands on an exact rest value:
+   nothing is left drifting.
+
+   --e-io (.62,0,.24,1) rather than --e-out is the whole point. --e-out is a
+   curve for something arriving softly from off-stage. --e-io is a curve for
+   something that was still, moved, and stopped -- a lever, not a feather.
+
+   Cover is guaranteed at every frame: with both sides on the same curve the
+   clip line sits at 100p% while the outgoing picture's top edge sits at
+   3.5p%, so the exposed strip is always far above the line. The incoming is
+   scaled past 1 for the whole travel, so it over-covers too. No frame of this
+   transition can show the --paper-sunk ground through a seam. */
+.pcard__media .is-alt{opacity:0;transition:opacity var(--d2) var(--e-io)}
+.pcard:hover .pcard__media .is-alt,
+.pcard--lit .pcard__media .is-alt{opacity:1}
+
+@supports (clip-path:inset(0 0 100% 0)){
+  .pcard__media .is-main{transition:transform var(--d3) var(--e-io)}
+  .pcard__media .is-alt{
+    /* Opaque at rest and hidden by the clip, not by opacity. The swap is a
+       cover, never a dissolve -- at no point are both pictures half-present. */
+    opacity:1;
+    clip-path:inset(0 0 100% 0);
+    transform:translateY(-2.4%) scale(1.03);
+    transition:clip-path var(--d3) var(--e-io),transform var(--d3) var(--e-io);
+  }
+  /* :focus-within is deliberately NOT the condition here, though it still is
+     for the two controls below. Closing quick view hands focus back to the
+     button that opened it, which lives inside this card, and the gate would
+     stay run with the pointer somewhere else entirely -- which is what "stuck
+     in zoom mode" was. :focus-visible does not separate the two either:
+     closing with Escape leaves the keyboard modality on and it matches just
+     the same. So the split is by role. The picture swap answers the pointer,
+     and it answers a keyboard arriving at the card's OWN link -- which is what
+     .pcard--lit carries; the controls answer anything focused inside. */
+  .pcard:hover .pcard__media .is-main,
+  .pcard--lit .pcard__media .is-main{transform:translateY(3.5%)}
+  .pcard:hover .pcard__media .is-alt,
+  .pcard--lit .pcard__media .is-alt{clip-path:inset(0 0 0 0);transform:none}
+
+  /* The edge. One hairline, in the site's own 1px rule vocabulary, drawn as a
+     background on the bottom row of a transparent full-height pseudo-element.
+
+     The pseudo is 1px taller than the frame, so at rest the line is parked in
+     that extra row just above the top edge, and at the end of the travel it is
+     parked in it just below the bottom edge. The frame's own overflow:hidden
+     clips it in both places. So the hairline exists only while the gate is
+     moving: it is struck at the moment the mechanism engages and extinguished
+     at the exact frame the picture lands -- no fade, no leftover rule across
+     the bottom of the photograph, and nothing to reverse on the way out.
+
+     Brass-lite rather than brass because these photographs are dark grounds,
+     which is the same reason the craftsmanship callouts use it. The lengthwise
+     gradient is borrowed from .part-pin__lead: a line that is solid end to end
+     reads as a scratch on the picture, one that falls away at the ends reads
+     as an edge catching the light. */
+  .pcard__media::after{
+    content:"";position:absolute;left:0;right:0;top:0;
+    /* The extra row is where the line parks, above the frame at rest and below
+       it once the gate has run; .pcard__media's overflow:hidden clips it in
+       both. This needs the frame to have a definite height, which it does
+       because of aspect-ratio:4/5 above -- the second place that ratio is
+       load-bearing rather than cosmetic. */
+    height:calc(100% + 1px);pointer-events:none;
+    /* The transparent ends are derived from the token, not hand-written as
+       its channels: spelling out rgba(201,152,122,0) twice means retuning
+       --brass-lite would leave the line fading to the old hue. */
+    background-image:linear-gradient(to right,
+      transparent 0,var(--brass-lite) 20%,
+      var(--brass-lite) 80%,transparent 100%);
+    background-size:100% 1px;background-position:0 100%;background-repeat:no-repeat;
+    transform:translateY(-100%);
+    transition:transform var(--d3) var(--e-io);
+  }
+  .pcard:hover .pcard__media::after,
+  .pcard--lit .pcard__media::after{transform:translateY(0)}
+}
+.pcard__body{display:grid;gap:var(--s2);padding-top:var(--s4)}
+.pcard__name{font:500 var(--t-h4)/1.2 var(--f-sans);letter-spacing:-.008em;color:var(--ink);margin:0}
+.pcard__name a{text-decoration:none}
+.pcard__name a::after{content:"";position:absolute;inset:0;z-index:1}
+.pcard__spec{font:400 var(--t-sm)/1.45 var(--f-sans);color:var(--ink-45);margin:0}
+.pcard__price{font:400 var(--t-sm)/1 var(--f-mono);letter-spacing:.06em;color:var(--ink);margin-top:var(--s1)}
+.pcard__wish{
+  position:absolute;top:var(--s3);right:var(--s3);z-index:2;
+  width:38px;height:38px;display:grid;place-items:center;
+  border:0;border-radius:var(--r-full);cursor:pointer;
+  background:rgba(255,253,249,.82);color:var(--ink);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  opacity:0;transform:translateY(-4px);
+  transition:opacity var(--d2) var(--e-out),transform var(--d2) var(--e-out),background-color var(--d1);
+}
+/* .pcard--lit, not :focus-within: focus-within cannot tell a keyboard
+   arriving at the card from focus being handed back when a panel closes, and
+   the second one left Quick view sitting on the photograph with the pointer
+   elsewhere. :focus-visible on the control itself stays, so a focused control
+   is never invisible. */
+.pcard:hover .pcard__wish,.pcard--lit .pcard__wish,.pcard__wish:focus-visible,
+.pcard__wish[aria-pressed=true]{opacity:1;transform:none}
+/* The controls are part of the same movement, not a second one running
+   alongside it. They are held back until the gate is most of the way down and
+   they travel in the gate's direction, top of the card first: heart lands at
+   ~540ms, the gate at 620ms, QUICK VIEW at ~640ms. Read together it is one
+   thing falling into place, which is what the old version was missing -- there
+   everything started at 0ms and finished at four different times.
+
+   The delay is declared on the hover state only, so it applies on the way in
+   and not on the way out: the controls leave at once and the mechanism
+   reverses behind them. It is deliberately not on :focus-visible or on a saved
+   heart, because a focus ring that arrives a quarter of a second late is a
+   bug. */
+.pcard:hover .pcard__wish,.pcard--lit .pcard__wish{transition-delay:240ms}
+.pcard__wish svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.4}
+.pcard__wish[aria-pressed=true] svg{fill:var(--ink)}
+
+/* Saving is the one moment in this flow worth marking: the heart presses in,
+   springs past its own size and settles, and a single brass ring leaves it.
+   The class is added by site.js on the save only, and retired when the
+   animation ends so the same card can play it again later. */
+@keyframes wish-beat{
+  0%{transform:scale(1)}
+  28%{transform:scale(.82)}
+  58%{transform:scale(1.22)}
+  100%{transform:scale(1)}
+}
+@keyframes wish-ring{
+  0%{transform:scale(.7);opacity:.55;border-width:2px}
+  100%{transform:scale(2.1);opacity:0;border-width:1px}
+}
+.pcard__wish.is-saved{animation:wish-beat 560ms var(--e-out)}
+.pcard__wish.is-saved svg{animation:wish-beat 560ms var(--e-out) 40ms}
+.pcard__wish::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;
+  border:2px solid var(--brass);opacity:0;pointer-events:none;
+}
+.pcard__wish.is-saved::after{animation:wish-ring 620ms var(--e-out)}
+.pcard__quick{
+  position:absolute;left:var(--s3);right:var(--s3);bottom:var(--s3);z-index:2;
+  opacity:0;transform:translateY(6px);
+  /* opacity:0 does not stop hit testing, and this box lies over the bottom
+     46px of the photograph -- measured 282x40 against a 306x382 frame. Without
+     this, a click there opens quick view instead of following the card's own
+     link, and the gate's 340ms delay widens the window in which the control is
+     invisible and still live. The whole card is already a link to the same
+     product, so nothing is lost by making it wait its turn. */
+  pointer-events:none;
+  transition:opacity var(--d2) var(--e-out),transform var(--d2) var(--e-out);
+}
+/* SEPARABLE FROM THE HOVER WORK -- a standing bug, not something the gate
+   introduced. .pcard__quick is absolute, and its containing block is .pcard,
+   not .pcard__media: .pcard__media is a sibling. So bottom:var(--s3) measured
+   12px up from the bottom of the WHOLE card, which put the button 98px below
+   the photograph, lying across the spec line and the price. It was only ever
+   invisible-by-accident, because it is a frosted pill meant to float on the
+   picture -- backdrop-filter has nothing to blur over ivory paper.
+
+   The media is the card's first child and carries aspect-ratio:4/5 at full
+   card width, so its height is exactly 1.25x the card's inline size. Container
+   query units let CSS say that: 125cqw IS the photograph's height, whatever
+   the column does. bottom then measures up from the card's bottom to --s3
+   inside the frame.
+
+   The button is not put inside .pcard__media instead, which would be the
+   obvious fix, because .pcard__media is an <a> and a <button> inside an anchor
+   is invalid and would not be reliably clickable. */
+@supports (container-type:inline-size){
+  .pcard{container-type:inline-size}
+  .pcard__quick{bottom:calc(100% - 125cqw + var(--s3))}
+}
+.pcard:hover .pcard__quick,.pcard--lit .pcard__quick,
+.pcard__quick:focus-within{opacity:1;transform:none;pointer-events:auto;transition-delay:340ms}
+.pcard__quick .btn{background:rgba(255,253,249,.94);color:var(--ink);border-color:transparent;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.pcard__flag{
+  position:absolute;top:var(--s3);left:var(--s3);z-index:2;
+  padding:var(--s1) var(--s3);background:var(--ink);color:var(--paper);
+  font:400 var(--t-xs)/1.5 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;
+}
+@media (pointer:coarse){
+  .pcard__wish{opacity:1;transform:none;width:44px;height:44px;top:var(--s2);right:var(--s2)}
+  .pcard__quick{display:none}
+  /* There is no hover on a touch screen, so the swap image is never seen.
+     display:none keeps a lazily-loaded image out of the viewport for good,
+     so it is never fetched either. And with no second picture there is no
+     gate: the travelling edge would be a box that can never move. */
+  .pcard__media .is-alt{display:none}
+  .pcard__media::after{display:none}
+}
+
+/* ------------------------------------------------------------- 8. HEADER */
+.site-header{
+  position:fixed;top:0;left:0;right:0;z-index:var(--z-header);
+  transition:transform var(--d2) var(--e-io),background-color var(--d2) var(--e-io),
+             border-color var(--d2) var(--e-io),color var(--d2) var(--e-io);
+  border-bottom:1px solid transparent;
+}
+.site-header[data-mode=solid]{background:rgba(245,242,236,.92);border-bottom-color:var(--rule);backdrop-filter:blur(14px) saturate(120%);-webkit-backdrop-filter:blur(14px) saturate(120%)}
+.site-header[data-mode=over]{background:transparent;color:var(--night-ink)}
+/* No script, no data-mode: fall back to the solid bar rather than dark-on-dark. */
+html:not(.js) .site-header{background:rgba(245,242,236,.92);border-bottom-color:var(--rule);color:var(--ink-70);backdrop-filter:blur(14px) saturate(120%);-webkit-backdrop-filter:blur(14px) saturate(120%)}
+html:not(.js) .site-header .brand__word{color:var(--ink)}
+html:not(.js) .site-header .brand__mark{stroke:var(--brass)}
+html:not(.js) .site-header .nav a{color:var(--ink-70)}
+.site-header.is-away{transform:translateY(-102%)}
+.site-header__in{
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--s5);
+  height:var(--header-h);
+  width:min(var(--wrap-wide),100% - 2*var(--gutter));margin-inline:auto;
+}
+.brand{display:inline-flex;align-items:center;gap:var(--s3);text-decoration:none;justify-self:start}
+.brand__mark{width:26px;height:26px;flex:none;fill:none;stroke:currentColor;stroke-width:1.3}
+.site-header[data-mode=solid] .brand__mark{stroke:var(--brass)}
+.site-header[data-mode=over] .brand__mark{stroke:var(--brass-lite)}
+.brand__word{
+  font:400 1.0625rem/1 var(--f-display);letter-spacing:.3em;text-transform:uppercase;
+  color:currentColor;padding-left:.3em;
+}
+.site-header[data-mode=solid] .brand__word{color:var(--ink)}
+
+/* position:relative so `bottom:2px` in 8a resolves against the 36px nav row.
+   Without it the containing block is the 76px header and the rule drops onto
+   the header's bottom edge; anchor() sorts the horizontal out on its own. */
+.nav{position:relative;display:flex;align-items:center;gap:var(--s1);justify-self:center}
+.nav a{
+  position:relative;z-index:1;display:inline-flex;align-items:center;height:36px;padding:0 var(--s4);
+  font:500 var(--t-sm)/1 var(--f-sans);letter-spacing:.05em;
+  text-decoration:none;color:currentColor;opacity:.72;
+  transition:opacity var(--d1) var(--e-micro);
+}
+.site-header[data-mode=solid] .nav a,
+.site-header[data-mode=solid] .nav__ind{color:var(--ink-70)}
+.nav a:hover,.nav a[aria-current=page]{opacity:1}
+.nav a::after{
+  content:"";position:absolute;left:var(--s4);right:var(--s4);bottom:2px;height:1px;
+  background:currentColor;transform:scaleX(0);transform-origin:left;
+  transition:transform var(--d2) var(--e-out);
+}
+.nav a:hover::after,.nav a[aria-current=page]::after{transform:scaleX(1)}
+
+/* ------------------------------------------------------- 8a. NAV INDICATOR --
+   One rule that travels between the five tabs instead of five that flash on and
+   off. The same trade .view-toggle makes on the collection page, and for the
+   same reason: the state change becomes a movement you can follow.
+
+   Hover keeps the per-link ::after above. That is a different statement ("you
+   are pointing at this") from the one this makes ("you are on this"), and
+   collapsing them would cost the current page its mark every time the pointer
+   crossed the nav.
+
+   It is anchored to the current tab rather than measured in script, which is
+   not a stylistic preference. Clicking a tab is a real cross-document
+   navigation, and the view transition in 11b can only carry the rule across if
+   the arriving document already has one under its own tab at its first render.
+   A rule built by site.js at the end of the body does not exist yet at that
+   moment -- measured at pagereveal, it was missing on every navigation and the
+   line simply reappeared at the new tab. Anchoring also hands the webfont swap,
+   browser zoom and every resize back to ordinary layout. */
+
+/* No anchor positioning: the per-link ::after above is still the page's mark,
+   exactly as before, and this never appears. */
+.nav__ind{display:none}
+
+@supports (anchor-name:--a){
+  /* The current tab is the anchor. While a departure is in flight the clicked
+     tab takes over -- and the current one must give the name up, or two
+     elements answer to it and the last in tree order wins, which would
+     silently freeze every leftward departure while rightward ones still ran. */
+  .nav a[aria-current=page]{anchor-name:--nav-cur}
+  .nav:has(a[data-going]) a[aria-current=page]{anchor-name:none}
+  .nav a[data-going]{anchor-name:--nav-cur}
+
+  .nav__ind{
+    display:block;
+    position:absolute;z-index:0;bottom:2px;height:1px;
+    position-anchor:--nav-cur;
+    /* Exactly the geometry .nav a::after draws -- inset from both edges of the
+       tab by its own padding -- so a browser that takes the fallback above and
+       one that takes this draw the same 1px in the same place. */
+    left:calc(anchor(left) + var(--s4));
+    right:calc(anchor(right) + var(--s4));
+    /* currentColor inherits the over/solid flip for free. It snaps rather than
+       cross-fading, which is what the labels beside it do -- giving the rule
+       its own colour transition would only make it lag them. */
+    background:currentColor;
+    pointer-events:none;
+    /* --e-io, not --e-out, for the reason written at .view-toggle::before:
+       --e-out front-loads so hard that a travelling element reads as a jump.
+
+       The departure and the view transition each take --d2, and neither knows
+       how much of the journey the other did: the snapshot cuts the slide
+       wherever the navigation happened to commit and the group carries it the
+       rest of the way. On this server that cut lands in the first few frames,
+       so it reads as one move. On a connection slow enough to cut it halfway,
+       both halves ease in and the seam is a slight hesitation in the middle.
+       Stamping the elapsed time across the document boundary would remove it,
+       at the cost of state that can go stale; it is not worth that. */
+    transition:left var(--d2) var(--e-io),right var(--d2) var(--e-io);
+    view-transition-name:aeterna-nav-ind;
+  }
+
+  /* With no tab of its own the anchor does not resolve, so the rule falls back
+     to auto offsets and sits at the nav's left edge at zero width (measured:
+     l=387.83, the nav's own left, w=0). Keep it out of the document entirely,
+     or every arrival on index and product would wipe the rule open from a
+     point there. */
+  .nav:not(:has(a[aria-current=page],a[data-going])) .nav__ind{display:none}
+
+  /* Retracted, the header is translated off screen but still rendered, so a
+     captured rule would fly in from above the viewport on the far side. This
+     is the whole fix for that case -- the class is already on the header when
+     pageswap fires -- so site.js does not repeat it. */
+  .site-header.is-away .nav__ind{view-transition-name:none}
+
+  /* The travelling rule is the current page's mark now, so the link's own
+     underline would draw a second line on top of it. content:none removes it
+     outright rather than scaling it away: there is nothing to transition, so
+     nothing can be caught half-collapsed at the moment of the swap. Hover on
+     the OTHER four tabs still draws its own. */
+  .nav a[aria-current=page]::after{content:none}
+}
+
+.utils{display:flex;align-items:center;gap:var(--s1);justify-self:end}
+.icon-btn{
+  position:relative;width:44px;height:44px;display:grid;place-items:center;
+  background:none;border:0;border-radius:var(--r-sm);cursor:pointer;color:currentColor;
+  transition:background-color var(--d1) var(--e-micro)}
+.icon-btn:hover{background:rgba(26,25,23,.06)}
+.site-header[data-mode=over] .icon-btn:hover{background:rgba(242,237,229,.1)}
+.icon-btn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn__count{
+  position:absolute;top:5px;right:4px;min-width:17px;height:17px;padding:0 4px;
+  display:grid;place-items:center;border-radius:var(--r-full);
+  background:var(--brass);color:#fff;
+  font:500 0.625rem/1 var(--f-mono);letter-spacing:0;
+}
+.site-header[data-mode=over] .icon-btn__count{background:var(--brass-lite);color:var(--night)}
+.icon-btn__count:empty,.icon-btn__count[data-count="0"]{display:none}
+.nav-toggle{display:none}
+
+@media (max-width:1040px){
+  :root{--header-h:64px}
+  .nav{display:none}
+  .site-header__in{grid-template-columns:auto 1fr}
+  .brand{grid-column:1}
+  .utils{grid-column:2}
+  .nav-toggle{display:grid}
+}
+
+/* The header holds a brand and four 44px controls. Below 560px that cluster is
+   wider than the container, and `overflow-x: clip` hides the overflow rather
+   than showing it, so the menu button silently leaves the screen. Measured at
+   320px: the toggle sat at x349-393 in a 320px viewport. */
+@media (max-width:560px){
+  .site-header__in{gap:var(--s3)}
+  .brand__word{font-size:0.9375rem;letter-spacing:.2em;padding-left:.2em}
+  .utils{gap:0}
+}
+@media (max-width:370px){
+  /* Only the very narrowest phones lose the wordmark; the mark carries the
+     brand there and the link keeps aria-label="Aeterna, home". */
+  .brand__word{display:none}
+}
+
+/* Mobile menu — full sheet, one destination list, utilities repeated */
+.mobile-menu{
+  position:fixed;inset:0;z-index:var(--z-overlay);
+  background:var(--paper);color:var(--ink);
+  display:grid;grid-template-rows:var(--header-h) 1fr auto;
+  opacity:0;visibility:hidden;transform:translateY(-8px);
+  transition:opacity var(--d2) var(--e-io),transform var(--d2) var(--e-io),visibility var(--d2);
+}
+.mobile-menu.is-open{opacity:1;visibility:visible;transform:none}
+.mobile-menu__bar{display:flex;align-items:center;justify-content:space-between;width:min(var(--wrap-wide),100% - 2*var(--gutter));margin-inline:auto}
+.mobile-menu__list{
+  display:grid;align-content:start;gap:var(--s1);
+  width:min(var(--wrap-wide),100% - 2*var(--gutter));margin-inline:auto;
+  padding-top:var(--s7);overflow-y:auto;
+}
+.mobile-menu__list a{
+  display:flex;align-items:baseline;justify-content:space-between;gap:var(--s4);
+  padding:var(--s4) 0;border-bottom:1px solid var(--rule);
+  font:400 clamp(1.625rem,7vw,2.5rem)/1.1 var(--f-display);letter-spacing:var(--track-display);
+  color:var(--ink);text-decoration:none;
+}
+.mobile-menu__list a span{font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:.04em;color:var(--ink-45)}
+/* Below the nav's breakpoint the primary nav is display:none, so the rule in 8a
+   is not there to mark the current page and this sheet is the only nav there
+   is. Same statement in this list's own terms: the rule under the current item,
+   in brass. */
+.mobile-menu__list a[aria-current=page]{border-bottom-color:var(--brass)}
+.mobile-menu__foot{
+  width:min(var(--wrap-wide),100% - 2*var(--gutter));margin-inline:auto;
+  padding-block:var(--s6);display:grid;gap:var(--s4);
+}
+
+/* ------------------------------------------------------------ 9. DRAWERS */
+.scrim{
+  position:fixed;inset:0;z-index:var(--z-drawer);background:rgba(26,25,23,.42);
+  opacity:0;visibility:hidden;transition:opacity var(--d2) var(--e-io),visibility var(--d2);
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+}
+.scrim.is-open{opacity:1;visibility:visible}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;z-index:calc(var(--z-drawer) + 1);
+  width:min(440px,100%);display:grid;grid-template-rows:auto 1fr auto;
+  background:var(--paper);color:var(--ink-70);
+  border-left:1px solid var(--rule);
+  transform:translateX(102%);visibility:hidden;
+  transition:transform var(--d2) var(--e-io),visibility var(--d2);
+}
+.drawer.is-open{transform:none;visibility:visible}
+.drawer__head{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s4);
+  padding:var(--s5) var(--s5) var(--s4);border-bottom:1px solid var(--rule);
+}
+.drawer__title{font:500 var(--t-h4)/1 var(--f-sans);letter-spacing:-.008em;color:var(--ink);margin:0}
+.drawer__body{overflow-y:auto;padding:var(--s5);display:grid;gap:var(--s5);align-content:start}
+.drawer__foot{padding:var(--s5);border-top:1px solid var(--rule);display:grid;gap:var(--s4)}
+.drawer__empty{display:grid;gap:var(--s4);justify-items:start;padding-block:var(--s7)}
+
+.line-item{display:grid;grid-template-columns:76px 1fr auto;gap:var(--s4);align-items:start}
+.line-item img{width:76px;aspect-ratio:4/5;object-fit:cover;border-radius:var(--r-sm);background:var(--paper-sunk)}
+.line-item__name{font:500 var(--t-sm)/1.3 var(--f-sans);color:var(--ink);margin:0}
+.line-item__meta{font:400 var(--t-xs)/1.5 var(--f-mono);letter-spacing:.06em;color:var(--ink-45);margin:var(--s1) 0 0}
+.line-item__price{font:400 var(--t-sm)/1 var(--f-mono);color:var(--ink);white-space:nowrap}
+.line-item__remove{
+  margin-top:var(--s2);padding:0;border:0;background:none;cursor:pointer;
+  font:400 var(--t-xs)/1 var(--f-sans);letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-45);text-decoration:underline;text-underline-offset:3px;
+}
+.line-item__remove:hover{color:var(--ink)}
+
+/* --------------------------------------------------- SAVED ROW ACTIONS --
+   A saved watch had no way into the bag without going back to find it again.
+   Move to bag is the primary of the pair, so it carries the brass; Remove
+   stays the quiet one it already was. */
+.line-item__acts{display:flex;align-items:center;gap:var(--s4);margin:var(--s2) 0 0;flex-wrap:wrap}
+.line-item__move{
+  display:inline-flex;align-items:center;gap:var(--s2);
+  padding:0;background:none;border:0;cursor:pointer;
+  font:500 var(--t-xs)/1 var(--f-mono);letter-spacing:var(--track-wide);
+  text-transform:uppercase;color:var(--brass);
+  border-bottom:1px solid transparent;
+  transition:color var(--d1) var(--e-micro),border-color var(--d1) var(--e-micro);
+}
+.line-item__move svg{
+  width:13px;height:13px;flex:none;fill:none;stroke:currentColor;
+  stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform var(--d2) var(--e-out);
+}
+.line-item__move:hover{color:var(--ink);border-bottom-color:var(--ink-45)}
+.line-item__move:hover svg{transform:translateY(-2px)}
+.line-item__move:disabled{opacity:.45;cursor:default}
+
+/* Both drawers. gap:0 with the spacing on the rows, so a row that collapses to
+   nothing takes its own spacing with it -- a gapped grid keeps the gap and the
+   list shuts with a jump at the end of an otherwise smooth close. */
+.line-list{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.line-list .line-item{padding-bottom:var(--s5)}
+.line-list .line-item:last-child{padding-bottom:0}
+.line-item{
+  transition:height var(--d2) var(--e-io),opacity var(--d1) var(--e-io),
+             transform var(--d2) var(--e-io),padding-bottom var(--d2) var(--e-io);
+}
+/* overflow only while it is closing: a permanent clip here would cut the focus
+   ring off Remove and Move to bag, which sit right at the row's edge */
+.line-item.is-leaving{overflow:hidden;opacity:0;transform:translateX(18px);padding-bottom:0}
+
+/* Two ways a row can leave, and they should not read alike. Move to bag sends
+   it somewhere: it slides right, after the thumbnail that just flew to the
+   header. Remove sends it nowhere, so the line settles where it stands instead
+   of travelling -- and its fade runs the length of the close rather than --d1,
+   which had the row gone in a sixth of the time its space took to shut. */
+.line-item.is-leaving.is-out{
+  transform:translateY(-3px) scale(.985);transform-origin:50% 0;
+  transition:height var(--d2) var(--e-io),opacity var(--d2) var(--e-io),
+             transform var(--d2) var(--e-io),padding-bottom var(--d2) var(--e-io);
+}
+/* the thumbnail is the loudest thing in the row, so it goes first */
+.line-item.is-leaving.is-out > img{
+  transform:scale(.94);opacity:.4;
+  transition:transform var(--d2) var(--e-io),opacity var(--d1) var(--e-io);
+}
+
+/* ------------------------------------------------------------ THE FLIGHT --
+   Outer carries X and leaves quickly, inner carries Y and arrives quickly; the
+   sum is an arc. A single element could only go in a straight line, and a
+   thumbnail sliding diagonally across the page reads as a glitch. */
+.fly{
+  position:fixed;z-index:calc(var(--z-overlay) + 10);pointer-events:none;
+  transition:transform 620ms cubic-bezier(.32,0,.62,1);
+}
+.fly__i{
+  display:block;width:100%;height:100%;
+  background-size:cover;background-position:50% 50%;
+  border-radius:var(--r-sm);box-shadow:var(--lift-2);
+  transition:transform 620ms cubic-bezier(.62,-0.08,.8,1),opacity 620ms var(--e-io) 180ms;
+}
+
+/* The badge answers when something lands in it. */
+@keyframes bag-bump{
+  0%{transform:scale(1)}40%{transform:scale(1.42)}100%{transform:scale(1)}
+}
+.icon-btn__count.is-bumped{animation:bag-bump 520ms var(--e-out)}
+
+/* A single brass ring leaving the bag when something lands in it -- the same
+   mark the wishlist heart throws (wish-ring), so the two acknowledgements in
+   this site speak once and with one accent. It is a ::after on a button that
+   already carries a count span, so nothing here can disturb that child. */
+@keyframes bag-land{
+  0%{transform:scale(.55);opacity:.6;border-width:2px}
+  100%{transform:scale(1.9);opacity:0;border-width:1px}
+}
+.icon-btn::after{
+  content:"";position:absolute;inset:0;border-radius:var(--r-full);
+  border:2px solid var(--brass);opacity:0;pointer-events:none;
+}
+.icon-btn.is-landed::after{animation:bag-land 620ms var(--e-out)}
+.site-header[data-mode=over] .icon-btn.is-landed::after{border-color:var(--brass-lite)}
+
+/* ------------------------------------------------------------- THE SEAL --
+   Add to bag, answered at the button. One hairline, opened from the centre
+   under the label, held, released. It opens from the centre rather than
+   sweeping left to right because a rule that fills a wide slab end to end
+   reads as a progress bar, and nothing here is loading; and it is a 1px rule
+   because that is the mark this site makes everywhere else -- the nav
+   indicator, .btn--ghost's underline, every section rule. The ghost button
+   retracts its rule on hover, so drawing one is the same idiom inverted.
+
+   currentColor, not brass: .btn--primary flips to a light face inside .night
+   and .on-dark, and the label colour flips with it, so borrowing the label's
+   colour keeps the rule legible on both without a second rule. (Same trick,
+   and same reason, as .nav__ind.)
+
+   Scoped to --primary so it can never collide with .btn--ghost::after, and
+   position/overflow are set only while it plays: the waitlist variant is a
+   disabled .btn--secondary that never receives the class and stays inert. */
+/* The mark is 52px and centred, not the width of the label. A rule as long as
+   the words under the words is an underline, and an underline under a button
+   reads as a link affordance; a short centred mark reads as a hallmark struck.
+
+   It is a TRANSITION on a state the script holds, not a keyframe. Section 14
+   collapses animation-duration to nothing, which would have left the button --
+   the one thing under the cursor -- saying nothing at all to a visitor who
+   asked for reduced motion. A collapsed transition still ends on the class's
+   value, so there the mark simply appears, holds, and goes.
+
+   The pseudo exists before the class so the transition has a from-state, and
+   is scoped to --primary so it can never collide with .btn--ghost::after --
+   the only other ::after on a .btn, and the same 1px currentColor idiom
+   running the other way (it retracts a rule on hover; this one draws one). */
+.btn--primary[data-add-to-cart]{position:relative}
+.btn--primary[data-add-to-cart]::after{
+  content:"";position:absolute;pointer-events:none;
+  left:50%;bottom:calc(var(--btn-h) * .19);   /* scales with the 52/48/40px variants */
+  width:52px;height:1px;margin-left:-26px;
+  background:currentColor;opacity:0;
+  transform:scaleX(0);transform-origin:center;
+  transition:transform var(--d1) var(--e-out),opacity var(--d2) var(--e-io);
+}
+.btn--primary[data-add-to-cart].is-sealing::after{opacity:.9;transform:scaleX(1)}
+.drawer__total{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s4)}
+.drawer__total dt{font:400 var(--t-sm)/1 var(--f-sans);color:var(--ink-45);margin:0}
+.drawer__total dd{font:400 var(--t-h4)/1 var(--f-mono);color:var(--ink);margin:0}
+
+/* Search */
+.search-panel{
+  position:fixed;top:0;left:0;right:0;z-index:calc(var(--z-drawer) + 1);
+  background:var(--paper);border-bottom:1px solid var(--rule);
+  transform:translateY(-102%);visibility:hidden;
+  transition:transform var(--d2) var(--e-io),visibility var(--d2);
+}
+.search-panel.is-open{transform:none;visibility:visible}
+.search-panel__in{width:min(var(--wrap),100% - 2*var(--gutter));margin-inline:auto;padding-block:var(--s6) var(--s7)}
+.search-panel__row{display:flex;align-items:center;gap:var(--s4);border-bottom:1px solid var(--rule-strong);padding-bottom:var(--s3)}
+.search-panel__row input{
+  flex:1;min-width:0;border:0;background:none;padding:var(--s2) 0;
+  font:400 clamp(1.375rem,3vw,2.125rem)/1.2 var(--f-display);color:var(--ink);letter-spacing:var(--track-display);
+}
+.search-panel__row input:focus{outline:none}
+.search-results{display:grid;gap:var(--s5);grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-top:var(--s6)}
+.search-empty{margin-top:var(--s6);display:grid;gap:var(--s3);justify-items:start}
+
+/* ------------------------------------------------------- 10. TOAST/STATES */
+.toast{
+  position:fixed;left:50%;bottom:var(--s6);z-index:var(--z-overlay);
+  transform:translate(-50%,16px);opacity:0;visibility:hidden;
+  display:flex;align-items:center;gap:var(--s4);
+  padding:var(--s3) var(--s5);background:var(--ink);color:var(--paper);
+  border-radius:var(--r-sm);box-shadow:var(--lift-2);
+  font:400 var(--t-sm)/1.4 var(--f-sans);max-width:calc(100% - 2*var(--gutter));
+  transition:opacity var(--d2) var(--e-out),transform var(--d2) var(--e-out),visibility var(--d2);
+}
+.toast.is-open{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.toast a{color:var(--paper);text-underline-offset:3px}
+
+.state{display:grid;gap:var(--s4);justify-items:center;text-align:center;padding-block:var(--s10);color:var(--ink-45)}
+.state .h3{color:var(--ink)}
+.skeleton{background:linear-gradient(90deg,var(--paper-sunk) 25%,#f1ece2 37%,var(--paper-sunk) 63%);background-size:400% 100%;animation:shimmer 1.4s linear infinite}
+@keyframes shimmer{to{background-position:-135% 0}}
+
+/* ------------------------------------------------------------- 11. MOTION */
+/* One entrance, used everywhere. Opacity + a short rise. Nothing else. */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity var(--d3) var(--e-out),transform var(--d3) var(--e-out)}
+.reveal.is-in{opacity:1;transform:none}
+.reveal-group>*{opacity:0;transform:translateY(18px);transition:opacity var(--d3) var(--e-out),transform var(--d3) var(--e-out)}
+.reveal-group.is-in>*{opacity:1;transform:none}
+.reveal-group.is-in>*:nth-child(1){transition-delay:0ms}
+.reveal-group.is-in>*:nth-child(2){transition-delay:70ms}
+.reveal-group.is-in>*:nth-child(3){transition-delay:140ms}
+.reveal-group.is-in>*:nth-child(4){transition-delay:210ms}
+.reveal-group.is-in>*:nth-child(5){transition-delay:280ms}
+.reveal-group.is-in>*:nth-child(6){transition-delay:350ms}
+.reveal-group.is-in>*:nth-child(n+7){transition-delay:420ms}
+/* Retire the stagger once it has played, so hovers never inherit the delay.
+   Specificity must beat the nth-child rules above. */
+.reveal-group.is-in.is-done>*:nth-child(n){transition-delay:0s}
+html:not(.js) .reveal,html:not(.js) .reveal-group>*{opacity:1;transform:none}
+
+/* -------------------------------------------------- 11b. PAGE TRANSITIONS --
+   The only mechanism that carries a moving element across a real document
+   boundary without turning the site into a client-side router. Both documents
+   must opt in, and this stylesheet is shared by all seven pages, so this rule
+   covers every navigation between them -- not only the nav. Same-origin only,
+   which a relative .html href satisfies. Where it is unsupported the at-rule is
+   discarded by ordinary CSS error handling: no console error, no layout effect,
+   navigation exactly as before. The browser excludes reloads and URL-bar
+   navigations; a link click and a script navigation (the search panel's Enter
+   key, site.js) both see it.
+
+   To scope it back to nothing, delete the one line below; everything else here
+   is inert without it, and section 8a still animates the departure on its own. */
+@view-transition{navigation:auto}
+
+/* The UA plays these at 250ms/ease, which is not on our scale. A navigation is
+   the largest state change the site has, so it answers to --d2 and the travel
+   curve. The rule's group especially: it is finishing a slide the previous page
+   started at --d2/--e-io, and on the UA default it would visibly change curve
+   halfway across the nav. */
+::view-transition-group(root),
+::view-transition-old(root),::view-transition-new(root),
+::view-transition-group(aeterna-nav-ind){
+  animation-duration:var(--d2);
+  animation-timing-function:var(--e-io);
+}
+
+/* Both halves of root share one duration and one curve on purpose. The image
+   pair is composited with plus-lighter, so the two opacities are summed: give
+   them different durations and the sum passes 1 in the middle and the whole
+   page flashes white. */
+
+/* The pair is retimed, NOT suppressed. An earlier cut gave it animation:none
+   and a hard opacity:0/1, so that two flat bars of one colour would not
+   cross-fade through each other while the group carried the movement. That is
+   right only while BOTH images exist, and plenty of these navigations are
+   singletons: index and product have no tab, so leaving one captures no old
+   image and leaving for one captures no new image, and the same happens on
+   every retracted-header or open-overlay navigation, where only the departing
+   document gives the name up. A named element always paints above root, so the
+   surviving image was drawn at full strength over the still-visible outgoing
+   page for the whole --d2 -- measured on index -> collection, the arriving rule
+   sat at a constant rgb(74,71,65) while everything around it cross-faded.
+
+   The UA's own fades handle both singletons correctly, and when both images do
+   exist plus-lighter holds their opacities summing to exactly 1, so the bars
+   blend rather than dissolve. Both halves must keep the same duration and curve
+   for that to hold -- see the note on root above.
+
+   width/height:100% is not cosmetic. Without it each image keeps its own
+   snapshot size instead of following the group: measured on Watches ->
+   Craftsmanship, the group animates 58.6px -> 97.8px while the old image stays
+   58.33px and the new stays 98.23px, both mis-sized against it throughout. */
+::view-transition-old(aeterna-nav-ind),
+::view-transition-new(aeterna-nav-ind){
+  animation-duration:var(--d2);
+  animation-timing-function:var(--e-io);
+  width:100%;height:100%;
+}
+
+/* Set from pageswap when an overlay is open: a named element always paints
+   above root, so the rule would stand in front of the sheet for the length of
+   the transition. The retracted-header case is handled in 8a instead, on the
+   class the header already carries. Either way this is one-sided -- the
+   arriving document is fresh and keeps its name -- so the outgoing rule is not
+   captured and the arriving one fades up over the cross-fade rather than
+   travelling. That is the intended result here; it is not a plain cross-fade,
+   and the fades above are what stop it being a pop. */
+html.vt-plain .nav__ind{view-transition-name:none}
+
+/* ------------------------------------------------------------- 12. FOOTER */
+.site-footer{background:var(--night);color:var(--night-ink-60);padding-block:var(--sec) var(--s7)}
+.site-footer a{color:var(--night-ink-60);text-decoration:none;transition:color var(--d1) var(--e-micro)}
+.site-footer a:hover{color:var(--night-ink)}
+.footer-top{display:grid;grid-template-columns:1.5fr repeat(3,minmax(0,1fr));gap:var(--s8) var(--s6);padding-bottom:var(--s8);border-bottom:1px solid var(--night-rule)}
+.footer-brand{display:grid;gap:var(--s4);align-content:start;max-width:34ch}
+.footer-brand .brand__word{color:var(--night-ink)}
+.footer-brand .brand__mark{stroke:var(--brass-lite)}
+.footer-col{display:grid;gap:var(--s3);align-content:start}
+.footer-col h2{font:400 var(--t-xs)/1 var(--f-mono);letter-spacing:var(--track-wide);text-transform:uppercase;color:var(--brass-lite);margin:0 0 var(--s2)}
+.footer-col a{font-size:var(--t-sm)}
+@media (pointer:coarse){.footer-col a,.footer-legal a{display:inline-flex;align-items:center;min-height:44px}.footer-col{gap:0}}
+
+/* --------------------------------------------------------- 13. UTILITIES */
+.flow-row{display:flex;flex-wrap:wrap;gap:var(--s4);align-items:center}
+.pad-top-sm{padding-top:var(--s5)}
+.text-center{text-align:center}
+.hide-sm{display:initial}
+@media (max-width:640px){.hide-sm{display:none}}
+.no-wrap{white-space:nowrap}
+
+/* A table wider than the column it sits in scrolls inside itself rather than
+   being silently clipped by `overflow-x: clip` on the page. The wrapper is
+   focusable so a keyboard user can scroll it too. Measured case: the register
+   table on about.html is 480px inside a 375px viewport. */
+.table-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.table-scroll:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (max-width:760px){
+  /* no-JS fallback: the wrapper is added by site.js, so give the table itself
+     a scrolling box when no script runs */
+  html:not(.js) main table{display:block;max-width:100%;overflow-x:auto}
+}
+.dl-spec{display:grid;gap:0;margin:0}
+.dl-spec>div{display:grid;grid-template-columns:minmax(120px,.42fr) 1fr;gap:var(--s4);padding:var(--s4) 0;border-top:1px solid var(--rule);align-items:baseline}
+.dl-spec dt{font:400 var(--t-xs)/1.4 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-45);margin:0}
+.dl-spec dd{margin:0;font-size:var(--t-sm);color:var(--ink-70)}
+.night .dl-spec>div{border-color:var(--night-rule)}
+.night .dl-spec dt{color:var(--night-ink-60)}
+.night .dl-spec dd{color:var(--night-ink)}
+@media (max-width:520px){.dl-spec>div{grid-template-columns:1fr;gap:var(--s1)}}
+
+/* ---------------------------------------------- touch target floor (44px) --
+   Everything a finger has to hit gets 44x44 on a coarse pointer. Measured at
+   375x812 with touch emulation, not assumed.
+   One deliberate exception: .pcard__name a measures 143x40, but its ::after
+   covers the whole card, so the real hit area is the 306x383 card. */
+@media (pointer:coarse){
+  .skip{min-height:44px;display:inline-flex;align-items:center}
+  .brand{min-height:44px}
+  .btn--ghost{min-height:44px;display:inline-flex;align-items:center}
+  .footer-legal a{padding-inline:var(--s2)}
+  .footer-social a{width:44px;height:44px}
+  .footer-brand .meta a{display:inline-flex;align-items:center;min-height:44px}
+  .site-footer .meta{line-height:1.2}
+}
+.footer-bottom{display:flex;flex-wrap:wrap;gap:var(--s4) var(--s6);align-items:center;justify-content:space-between;padding-top:var(--s6)}
+.footer-legal{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5);font-size:var(--t-sm);margin:0}
+.footer-social{display:flex;gap:var(--s2)}
+.footer-social a{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--night-rule);border-radius:var(--r-sm)}
+.footer-social a:hover{border-color:var(--night-ink)}
+.footer-social svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.4}
+.footer-note{font:400 var(--t-xs)/1.7 var(--f-mono);letter-spacing:.04em;color:rgba(242,237,229,.5);max-width:86ch;margin:var(--s6) 0 0}
+@media (max-width:900px){
+  .footer-top{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .footer-brand{grid-column:1/-1}
+}
+@media (max-width:520px){.footer-top{grid-template-columns:1fr;gap:var(--s7)}}
+
+/* ------------------------------------------------- 14. REDUCED MOTION */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{
+    animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;transition-delay:0s!important;
+  }
+  .reveal,.reveal-group>*{opacity:1!important;transform:none!important}
+  .skeleton{animation:none;background:var(--paper-sunk)}
+  /* The blanket above already collapses these, but the flight is built in the
+     DOM at click time and site.js skips creating it at all under this query --
+     see MOTION_OFF. This is only here so a half-built one cannot linger. */
+  .fly{display:none}
+  /* The blanket above cannot reach a view transition. ::view-transition-* are a
+     separate tree hanging off :root and `*` does not match them, and the feature
+     has no reduced-motion behaviour of its own -- so without this, someone who
+     asked for no motion would still get a full-length page transition.
+     Withdrawing the opt-in is better than shortening it: it also skips taking
+     the snapshots at all. (.nav__ind itself is an ordinary element, so the
+     blanket does collapse its travel.) */
+  @view-transition{navigation:none}
+  /* Belt and braces: if a browser ever fails to parse @view-transition nested
+     in @media, the rule above is dropped and the transition plays at full
+     length. This one survives that. */
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){
+    animation-duration:1ms!important;
+  }
+}
+
+/* ------------------------------------------- 15. FORCED COLORS (HIGH CONTRAST)
+   Windows High Contrast strips text-shadow and every gradient, which is exactly
+   what keeps copy legible over photography here. So in that mode the imagery
+   steps back and the system's own colours do the work. */
+@media (forced-colors: active){
+  .hero__poster,.hero__video,.hero__scrim,.hero__static-img,
+  .spec-img,.ending-img,.story__plate img{display:none!important}
+  .hero__band,.hero__static-copy,.ending-copy{
+    background:Canvas;color:CanvasText;padding:var(--s5);border:1px solid CanvasText;
+  }
+  .btn{border:1px solid ButtonText!important;forced-color-adjust:none;background:ButtonFace!important;color:ButtonText!important}
+  .btn--primary{background:Highlight!important;color:HighlightText!important;border-color:Highlight!important}
+  /* background-image resolves to none here, so the gate's brass blade does
+     not draw and the swap runs bare. That is the right degradation -- the
+     clip-path still carries the movement, and this border keeps the frame
+     legible without it. */
+  .pcard__media,.jcard__media{border:1px solid CanvasText}
+  .eyebrow,.story__num,.craft__n{color:LinkText}
+  /* background-color is forced to Canvas in this mode, so a currentColor
+     hairline disappears -- and it is the only mark of the current tab. Both
+     marks need it: the anchored rule, and the per-link ::after that draws
+     instead of it where anchor positioning is unavailable. */
+  .nav__ind,
+  .nav a[aria-current=page]::after,.nav a:hover::after{
+    forced-color-adjust:none;background:LinkText;
+  }
+  .icon-btn__count{forced-color-adjust:none;background:Highlight;color:HighlightText}
+  .reveal,.reveal-group>*{opacity:1!important;transform:none!important}
+}
+
+/* --------------------------------------------------------------- 16. PRINT
+   A watch this expensive gets printed and put in a folder. Without this the
+   page prints as twenty blank sheets of near-white ink on white paper. */
+@media print{
+  :root{
+    --paper:#fff;--paper-sunk:#fff;--paper-card:#fff;
+    --ink:#000;--ink-70:#222;--ink-45:#444;--rule:#bbb;--rule-strong:#888;
+    /* the night tokens have to flip too, or every dark chapter prints as a
+       solid black rectangle with near-white ink on it */
+    --night:#fff;--night-2:#fff;--night-ink:#000;--night-ink-60:#333;
+    --night-rule:#bbb;--night-rule-strong:#888;--brass:#6b4a2e;--brass-lite:#6b4a2e;
+  }
+  html,body{background:#fff!important;color:#000!important}
+  body{font-size:11pt;line-height:1.5}
+  .site-header,.mobile-menu,.drawer,.scrim,.search-panel,.toast,
+  .hero__video,.hero__poster,.hero__scrim,.hero__cue,.hero__ring,
+  .pcard__wish,.pcard__quick,.nav-toggle,.utils,.footer-social,
+  .env,.sparks,.balance{display:none!important}
+  .hero,.hero__stage,.story,.news{background:#fff!important}
+  .hero{height:auto!important}
+  .hero__static{min-height:0!important;display:block!important}
+  .hero__stage{position:static!important;height:auto!important}
+  .hero__bands{position:static!important}
+  .hero__band,.hero__static-copy,.ending-copy,.brand__word{position:static!important;transform:none!important;opacity:1!important;visibility:visible!important;width:auto!important;text-shadow:none!important}
+  .hero__static-img{display:none!important}
+  .night,.site-footer,.page-head--night{background:#fff!important;color:#000!important}
+  .night .display,.night .h1,.night .h2,.night .h3,.night .h4,
+  .site-footer a,.night .body,.night .lede,.night .meta{color:#000!important}
+  .reveal,.reveal-group>*{opacity:1!important;transform:none!important}
+  .sec,.sec-lg{padding-block:18pt!important}
+  .story__plate{position:static!important;height:auto!important}
+  .story__chapter{min-height:0!important;padding-block:12pt!important}
+  a{text-decoration:underline}
+  /* a printed page has no hover, so a link's destination has to be on the paper */
+  main a[href^="http"]::after,main a[href^="/"]::after,main a[href$=".html"]::after{
+    content:" (" attr(href) ")";font:400 8pt var(--f-mono);color:#555;
+  }
+  .pcard,.review,.tile,.craft__cell,figure,.story__chapter,.trust__item{break-inside:avoid}
+  h1,h2,h3{break-after:avoid}
+  img{max-width:100%!important}
+}
